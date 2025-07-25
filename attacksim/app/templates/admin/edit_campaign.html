@@ -114,15 +114,105 @@
                         <label for="body" class="block text-sm font-medium text-gray-700 mb-2">
                             Email Body *
                         </label>
+                        
+                        <!-- Social Media Quick Add Buttons -->
+                        <div class="mb-3 p-3 bg-gray-50 rounded-md">
+                            <p class="text-sm font-medium text-gray-700 mb-2">Quick Add Social Media Clone Links:</p>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" 
+                                        class="social-link-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                                        data-platform="discord"
+                                        data-link="https://discord-security-team.fake-site.com/verify-account?token=abc123">
+                                    📱 Discord Clone
+                                </button>
+                                <button type="button" 
+                                        class="social-link-btn bg-pink-600 hover:bg-pink-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                                        data-platform="instagram"
+                                        data-link="https://instagram-security.fake-domain.org/account-verification?id=user789">
+                                    📷 Instagram Clone
+                                </button>
+                                <button type="button" 
+                                        class="social-link-btn bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                                        data-platform="facebook"
+                                        data-link="https://facebook-help-center.suspicious-site.net/security-check">
+                                    👥 Facebook Clone
+                                </button>
+                                <button type="button" 
+                                        class="social-link-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                                        data-platform="youtube"
+                                        data-link="https://youtube-creator-portal.fake-yt.com/monetization-review">
+                                    📺 YouTube Clone
+                                </button>
+                                <button type="button" 
+                                        class="social-link-btn bg-blue-400 hover:bg-blue-500 text-white px-3 py-1 rounded text-sm transition-colors"
+                                        data-platform="twitter"
+                                        data-link="https://twitter-verification.malicious-domain.co/blue-checkmark">
+                                    🐦 Twitter Clone
+                                </button>
+                                <button type="button" 
+                                        class="social-link-btn bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                                        data-platform="twitch"
+                                        data-link="https://twitch-partner-program.fake-streaming.net/application-status">
+                                    🎮 Twitch Clone
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Click a button to add a placeholder clone link to your email content</p>
+                        </div>
+                        
                         <textarea id="body" 
                                   name="body" 
                                   rows="10"
                                   required
                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                   placeholder="Enter the email body content...">{{ campaign.body }}</textarea>
-                        <p class="text-xs text-gray-500 mt-1">
-                            You can use HTML formatting. Use {{recipient_email}} for personalization and {{tracking_url}} for click tracking.
-                        </p>
+                        <div class="text-xs text-gray-500 mt-1 space-y-1">
+                            <p>You can use HTML formatting. Available placeholders:</p>
+                            <p><code>{{recipient_email}}</code> - recipient's email, <code>{{tracking_url}}</code> - tracking URL</p>
+                            <p><code>{{image1}}</code>, <code>{{image2}}</code>, etc. - uploaded images (in order)</p>
+                            <p><strong>Note:</strong> All links will be replaced with tracking URLs. Images without placeholders appear at the end.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Image Upload Section -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Attached Images
+                        </label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-md p-4">
+                            <div class="text-center">
+                                <i data-lucide="image" class="h-8 w-8 text-gray-400 mx-auto mb-2"></i>
+                                <div class="flex text-sm text-gray-600">
+                                    <label for="image-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                        <span>Upload images</span>
+                                        <input id="image-upload" name="image-upload" type="file" class="sr-only" accept="image/*" multiple>
+                                    </label>
+                                    <p class="pl-1">or drag and drop</p>
+                                </div>
+                                <p class="text-xs text-gray-500">PNG, JPG, GIF up to 5MB each</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Uploaded Images Preview -->
+                        <div id="uploaded-images" class="mt-3 {% if not campaign.get_attached_images() %}hidden{% endif %}">
+                            <p class="text-sm font-medium text-gray-700 mb-2">Uploaded Images:</p>
+                            <div id="image-list" class="space-y-2">
+                                {% for image in campaign.get_attached_images() %}
+                                <div class="flex items-center space-x-3 p-2 bg-gray-50 rounded">
+                                    <img src="{{ image.url }}" alt="{{ image.filename }}" class="h-16 w-16 object-cover rounded">
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium">{{ image.filename }}</p>
+                                        <p class="text-xs text-gray-500">{{ image.url }}</p>
+                                    </div>
+                                    <button type="button" class="remove-image text-red-600 hover:text-red-800" data-filename="{{ image.filename }}">
+                                        <i data-lucide="x" class="h-4 w-4"></i>
+                                    </button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Hidden field to store image data -->
+                        <input type="hidden" id="attached_images" name="attached_images" value="{{ campaign.attached_images or '' }}">
                     </div>
 
                     <!-- Sender Configuration -->
@@ -240,5 +330,167 @@
             }
         }
     });
+    
+    // Social Media Quick Add functionality
+    const socialLinkBtns = document.querySelectorAll('.social-link-btn');
+    const bodyTextarea = document.getElementById('body');
+    console.log('Found social link buttons:', socialLinkBtns.length);
+    console.log('Body textarea:', bodyTextarea);
+    
+    socialLinkBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent form submission
+            console.log('Button clicked:', this.dataset.platform);
+            const platform = this.dataset.platform;
+            const link = this.dataset.link;
+            const currentText = bodyTextarea.value;
+            
+            // Create a nice HTML link to append
+            const linkHtml = `\n<p>Click here to verify your ${platform.charAt(0).toUpperCase() + platform.slice(1)} account: <a href="${link}" style="color: #1e40af; text-decoration: underline;">Verify Now</a></p>\n`;
+            
+            bodyTextarea.value = currentText + linkHtml;
+            bodyTextarea.focus();
+            console.log('Text added to body, new length:', bodyTextarea.value.length);
+            
+            // Flash the button to show it was clicked
+            const originalBg = this.style.backgroundColor;
+            this.style.backgroundColor = '#059669';
+            setTimeout(() => {
+                this.style.backgroundColor = originalBg;
+            }, 200);
+        });
+    });
+    
+    // Image Upload functionality
+    const imageUpload = document.getElementById('image-upload');
+    const uploadedImages = document.getElementById('uploaded-images');
+    const imageList = document.getElementById('image-list');
+    const attachedImagesInput = document.getElementById('attached_images');
+    
+    // Parse existing images
+    let uploadedImagesList = [];
+    try {
+        const existingImages = attachedImagesInput.value;
+        if (existingImages) {
+            uploadedImagesList = JSON.parse(existingImages);
+        }
+    } catch (e) {
+        uploadedImagesList = [];
+    }
+    
+    // Add remove functionality to existing images
+    document.querySelectorAll('.remove-image').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const filename = this.dataset.filename;
+            const element = this.closest('.flex');
+            removeImage(filename, element);
+        });
+    });
+    
+    imageUpload.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        files.forEach(file => uploadImage(file));
+    });
+    
+    function uploadImage(file) {
+        // Validate file size
+        if (file.size > 5 * 1024 * 1024) {
+            alert(`File ${file.name} is too large. Maximum size is 5MB.`);
+            return;
+        }
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        // Show loading state
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'flex items-center space-x-2 p-2 bg-blue-50 rounded';
+        loadingDiv.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div><span class="text-sm">Uploading ${file.name}...</span>`;
+        imageList.appendChild(loadingDiv);
+        uploadedImages.classList.remove('hidden');
+        
+        // Upload the image
+        fetch('/admin/campaigns/upload-image', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || ''
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Remove loading div
+            imageList.removeChild(loadingDiv);
+            
+            if (data.success) {
+                // Add to uploaded images list
+                uploadedImagesList.push({
+                    filename: data.filename,
+                    url: data.url
+                });
+                
+                // Update hidden input
+                attachedImagesInput.value = JSON.stringify(uploadedImagesList);
+                
+                // Add to preview list
+                const imageDiv = document.createElement('div');
+                imageDiv.className = 'flex items-center space-x-3 p-2 bg-gray-50 rounded';
+                imageDiv.innerHTML = `
+                    <img src="${data.url}" alt="${data.filename}" class="h-16 w-16 object-cover rounded">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium">${data.filename}</p>
+                        <p class="text-xs text-gray-500">${data.url}</p>
+                    </div>
+                    <button type="button" class="remove-image text-red-600 hover:text-red-800" data-filename="${data.filename}">
+                        <i data-lucide="x" class="h-4 w-4"></i>
+                    </button>
+                `;
+                imageList.appendChild(imageDiv);
+                
+                // Add remove functionality
+                const removeBtn = imageDiv.querySelector('.remove-image');
+                removeBtn.addEventListener('click', function() {
+                    removeImage(data.filename, imageDiv);
+                });
+                
+                // Re-initialize Lucide icons
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            } else {
+                alert(`Failed to upload ${file.name}: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            // Remove loading div
+            imageList.removeChild(loadingDiv);
+            console.error('Upload error:', error);
+            let errorMessage = error.message;
+            if (error.message.includes('JSON')) {
+                errorMessage = 'Server returned an invalid response. Please check if you are logged in and try again.';
+            }
+            alert(`Failed to upload ${file.name}: ${errorMessage}`);
+        });
+    }
+    
+    function removeImage(filename, element) {
+        // Remove from uploaded images list
+        uploadedImagesList = uploadedImagesList.filter(img => img.filename !== filename);
+        attachedImagesInput.value = JSON.stringify(uploadedImagesList);
+        
+        // Remove from DOM
+        imageList.removeChild(element);
+        
+        // Hide section if no images
+        if (uploadedImagesList.length === 0) {
+            uploadedImages.classList.add('hidden');
+        }
+    }
 </script>
 {% endblock %} 

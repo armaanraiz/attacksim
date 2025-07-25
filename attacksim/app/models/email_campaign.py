@@ -32,6 +32,9 @@ class EmailCampaign(db.Model):
     sender_name = db.Column(db.String(100), nullable=False)
     sender_email = db.Column(db.String(200), nullable=False)
     
+    # Images attached to the email
+    attached_images = db.Column(db.Text, nullable=True)  # JSON format: [{"filename": "image.jpg", "url": "/static/images/campaigns/image.jpg"}]
+    
     # Tracking URLs and parameters
     tracking_domain = db.Column(db.String(200), nullable=True)
     tracking_enabled = db.Column(db.Boolean, default=True, nullable=False)
@@ -119,8 +122,8 @@ class EmailCampaign(db.Model):
     
     def can_be_sent(self):
         """Check if campaign can be sent"""
-        return (self.status in [CampaignStatus.DRAFT, CampaignStatus.SCHEDULED] and 
-                self.target_group and 
+        # Allow sending campaigns at any status for phishing simulations (enables re-sending)
+        return (self.target_group and 
                 all([self.subject, self.body, self.sender_email]))
     
     def get_recipient_emails(self):
@@ -154,6 +157,27 @@ class EmailCampaign(db.Model):
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+    def get_attached_images(self):
+        """Get list of attached images"""
+        if not self.attached_images:
+            return []
+        try:
+            return json.loads(self.attached_images)
+        except (json.JSONDecodeError, TypeError):
+            return []
+    
+    def add_attached_image(self, filename, url):
+        """Add an attached image"""
+        images = self.get_attached_images()
+        images.append({"filename": filename, "url": url})
+        self.attached_images = json.dumps(images)
+    
+    def remove_attached_image(self, filename):
+        """Remove an attached image"""
+        images = self.get_attached_images()
+        images = [img for img in images if img.get("filename") != filename]
+        self.attached_images = json.dumps(images) if images else None
 
 class EmailRecipient(db.Model):
     """Individual email recipient tracking"""

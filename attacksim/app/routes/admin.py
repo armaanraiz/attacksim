@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app
 from flask_login import login_required, current_user
 from functools import wraps
+from werkzeug.utils import secure_filename
 from app import db
 from app.models import User, Scenario, Interaction, Group, EmailCampaign, EmailRecipient
 from app.models.scenario import ScenarioType, ScenarioStatus
@@ -8,6 +9,8 @@ from app.models.interaction import InteractionResult
 from app.models.email_campaign import CampaignStatus
 from app.utils.email_sender import PhishingEmailSender
 import json
+import os
+import uuid
 
 bp = Blueprint('admin', __name__)
 
@@ -20,6 +23,38 @@ def admin_required(f):
             return redirect(url_for('main.index'))
         return f(*args, **kwargs)
     return decorated_function
+
+# Image upload configuration
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_campaign_image(file):
+    """Save uploaded image and return the URL"""
+    try:
+        if not file or not allowed_file(file.filename):
+            return None
+        
+        # Generate unique filename
+        filename = secure_filename(file.filename)
+        name, ext = os.path.splitext(filename)
+        unique_filename = f"{uuid.uuid4()}{ext}"
+        
+        # Save to static/images/campaigns
+        upload_dir = os.path.join(current_app.root_path, 'static', 'images', 'campaigns')
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        file_path = os.path.join(upload_dir, unique_filename)
+        file.save(file_path)
+        
+        return f"/static/images/campaigns/{unique_filename}"
+    except Exception as e:
+        current_app.logger.error(f"Error saving image: {str(e)}")
+        return None
 
 @bp.route('/')
 @login_required
@@ -460,6 +495,11 @@ def create_campaign():
             created_by=current_user.id
         )
         
+        # Handle attached images from the form
+        attached_images = request.form.get('attached_images', '')
+        if attached_images:
+            campaign.attached_images = attached_images
+        
         db.session.add(campaign)
         db.session.commit()
         
@@ -489,10 +529,8 @@ def edit_campaign(campaign_id):
     """Edit campaign"""
     campaign = EmailCampaign.query.get_or_404(campaign_id)
     
-    # Only allow editing if campaign hasn't been sent
-    if campaign.status in [CampaignStatus.SENT, CampaignStatus.COMPLETED]:
-        flash('Cannot edit a campaign that has already been sent.', 'error')
-        return redirect(url_for('admin.view_campaign', campaign_id=campaign.id))
+    # Allow editing campaigns at any status for phishing simulations
+    # Note: Editing sent campaigns allows for corrections and re-use
     
     if request.method == 'POST':
         # Get form data
@@ -541,6 +579,10 @@ def edit_campaign(campaign_id):
         campaign.sender_email = sender_email
         campaign.total_recipients = group.get_member_count()
         
+        # Handle attached images from the form
+        attached_images = request.form.get('attached_images', '')
+        campaign.attached_images = attached_images if attached_images else None
+        
         db.session.commit()
         flash(f'Campaign "{campaign.name}" has been updated successfully.', 'success')
         return redirect(url_for('admin.view_campaign', campaign_id=campaign.id))
@@ -561,14 +603,28 @@ def send_campaign(campaign_id):
         flash('Campaign cannot be sent. Please check all required fields.', 'error')
         return redirect(url_for('admin.view_campaign', campaign_id=campaign.id))
     
-    # Send campaign
-    sender = PhishingEmailSender()
-    success, message = sender.send_campaign(campaign)
+    # Send campaign (or re-send if already sent)
+    is_resend = campaign.status in [CampaignStatus.SENT, CampaignStatus.COMPLETED]
     
-    if success:
-        flash(message, 'success')
-    else:
-        flash(f'Failed to send campaign: {message}', 'error')
+    try:
+        sender = PhishingEmailSender()
+        success, message = sender.send_campaign(campaign)
+        
+        if success:
+            action = "re-sent" if is_resend else "sent"
+            flash(f'Campaign {action} successfully! {message}', 'success')
+        else:
+            action = "re-send" if is_resend else "send"
+            flash(f'Failed to {action} campaign: {message}', 'error')
+    
+    except ValueError as ve:
+        # Configuration errors
+        flash(f'Email configuration error: {str(ve)}', 'error')
+        current_app.logger.error(f"Email config error when sending campaign {campaign.id}: {str(ve)}")
+    except Exception as e:
+        # Other unexpected errors
+        flash(f'Unexpected error: {str(e)}', 'error')
+        current_app.logger.error(f"Unexpected error when sending campaign {campaign.id}: {str(e)}")
     
     return redirect(url_for('admin.view_campaign', campaign_id=campaign.id))
 
@@ -579,13 +635,42 @@ def delete_campaign(campaign_id):
     """Delete campaign"""
     campaign = EmailCampaign.query.get_or_404(campaign_id)
     
-    # Only allow deletion if campaign hasn't been sent
-    if campaign.status in [CampaignStatus.SENT, CampaignStatus.COMPLETED]:
-        flash('Cannot delete a campaign that has already been sent.', 'error')
-        return redirect(url_for('admin.view_campaign', campaign_id=campaign.id))
+    # Allow deletion of campaigns at any status for phishing simulations
+    # Note: This allows cleanup of test campaigns and sent campaigns if needed
     
     db.session.delete(campaign)
     db.session.commit()
     
     flash(f'Campaign "{campaign.name}" has been deleted.', 'success')
-    return redirect(url_for('admin.campaigns')) 
+    return redirect(url_for('admin.campaigns'))
+
+@bp.route('/campaigns/upload-image', methods=['POST'])
+@login_required
+@admin_required
+def upload_campaign_image():
+    """Upload image for email campaign"""
+    try:
+        if 'image' not in request.files:
+            return jsonify({'success': False, 'error': 'No image file provided'}), 400
+        
+        file = request.files['image']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
+        
+        # Check file size
+        if hasattr(file, 'content_length') and file.content_length > MAX_FILE_SIZE:
+            return jsonify({'success': False, 'error': 'File too large. Maximum size is 5MB'}), 400
+        
+        # Save the image
+        image_url = save_campaign_image(file)
+        if not image_url:
+            return jsonify({'success': False, 'error': 'Invalid file type. Allowed: PNG, JPG, JPEG, GIF, BMP, WebP'}), 400
+        
+        return jsonify({
+            'success': True,
+            'url': image_url,
+            'filename': file.filename
+        })
+    except Exception as e:
+        current_app.logger.error(f"Image upload error: {str(e)}")
+        return jsonify({'success': False, 'error': 'An error occurred while uploading the image'}), 500 
