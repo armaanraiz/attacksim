@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% set title = "Admin Dashboard" %}
+
+{% block nav_subtitle %}Administration Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p class="text-gray-600 mt-2">Monitor and manage your AttackSim platform</p>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="grid md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white border-0 shadow-md rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-full bg-blue-100">
+                        <i data-lucide="users" class="h-6 w-6 text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Users</p>
+                        <p class="text-2xl font-bold text-blue-600">{{ stats.total_users }}</p>
+                        <p class="text-xs text-gray-500">{{ stats.consented_users }} with consent</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border-0 shadow-md rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-full bg-green-100">
+                        <i data-lucide="target" class="h-6 w-6 text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Scenarios</p>
+                        <p class="text-2xl font-bold text-green-600">{{ stats.total_scenarios }}</p>
+                        <p class="text-xs text-gray-500">{{ stats.active_scenarios }} active</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border-0 shadow-md rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-full bg-orange-100">
+                        <i data-lucide="activity" class="h-6 w-6 text-orange-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Interactions</p>
+                        <p class="text-2xl font-bold text-orange-600">{{ stats.total_interactions }}</p>
+                        <p class="text-xs text-gray-500">{{ stats.successful_detections }} detected</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border-0 shadow-md rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-full bg-purple-100">
+                        <i data-lucide="trending-up" class="h-6 w-6 text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Detection Rate</p>
+                        <p class="text-2xl font-bold text-purple-600">{{ stats.detection_rate }}%</p>
+                        <p class="text-xs text-gray-500">Overall success rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid lg:grid-cols-4 gap-6 mb-8">
+            <a href="{{ url_for('admin.create_scenario') }}" 
+               class="bg-white border-0 shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-full bg-blue-100">
+                        <i data-lucide="plus" class="h-6 w-6 text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-900">Create Scenario</p>
+                        <p class="text-xs text-gray-500">Add new attack simulation</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{{ url_for('admin.create_group') }}" 
+               class="bg-white border-0 shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-full bg-green-100">
+                        <i data-lucide="users" class="h-6 w-6 text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-900">Create Group</p>
+                        <p class="text-xs text-gray-500">Organize users for campaigns</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{{ url_for('admin.create_campaign') }}" 
+               class="bg-white border-0 shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-full bg-orange-100">
+                        <i data-lucide="mail" class="h-6 w-6 text-orange-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-900">Create Campaign</p>
+                        <p class="text-xs text-gray-500">Send phishing emails</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{{ url_for('admin.analytics') }}" 
+               class="bg-white border-0 shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-full bg-purple-100">
+                        <i data-lucide="bar-chart" class="h-6 w-6 text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-900">View Analytics</p>
+                        <p class="text-xs text-gray-500">Detailed reports</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white border-0 shadow-md rounded-lg">
+            <div class="p-6 border-b">
+                <h2 class="text-lg font-semibold">Recent Activity</h2>
+                <p class="text-gray-600 text-sm mt-1">Latest user interactions with simulations</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                User
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Scenario
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Type
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Result
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Date
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for interaction in recent_interactions %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ interaction.user.get_full_name() }}
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    {{ interaction.user.email }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ interaction.scenario.name }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                           {{ 'bg-red-100 text-red-800' if interaction.interaction_type.value == 'email_opened' else
+                                              'bg-orange-100 text-orange-800' if interaction.interaction_type.value == 'login_attempted' else
+                                              'bg-blue-100 text-blue-800' }}">
+                                    {{ interaction.interaction_type.value.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                           {{ 'bg-green-100 text-green-800' if interaction.detected_threat else
+                                              'bg-red-100 text-red-800' }}">
+                                    {{ 'Detected' if interaction.detected_threat else 'Fell For It' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ interaction.created_at.strftime('%m/%d/%Y %I:%M %p') }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                {% if not recent_interactions %}
+                <div class="text-center py-8">
+                    <i data-lucide="activity" class="h-12 w-12 text-gray-400 mx-auto mb-4"></i>
+                    <p class="text-gray-500">No recent interactions found.</p>
+                    <p class="text-gray-400 text-sm">User activity will appear here once simulations are started.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Lucide icons
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>
+{% endblock %} 

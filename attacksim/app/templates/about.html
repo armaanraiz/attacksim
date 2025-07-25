@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% set title = "About" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">About AttackSim</h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            A comprehensive security awareness training platform designed to protect organizations through education and simulation.
+        </p>
+    </div>
+
+    <!-- Mission Section -->
+    <div class="grid lg:grid-cols-2 gap-12 items-center mb-16">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Our Mission</h2>
+            <p class="text-lg text-gray-600 mb-4">
+                AttackSim empowers individuals and organizations to build robust cybersecurity defenses through 
+                hands-on training and realistic threat simulations.
+            </p>
+            <p class="text-lg text-gray-600 mb-6">
+                We believe that the best defense against cyber threats is education, awareness, and practice in a 
+                safe, controlled environment.
+            </p>
+            <div class="flex items-center space-x-4">
+                <div class="bg-blue-100 p-3 rounded-full">
+                    <i data-lucide="shield-check" class="h-6 w-6 text-blue-600"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-900">Safe Learning Environment</h3>
+                    <p class="text-gray-600">All simulations are conducted ethically with full consent</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg p-8 text-white">
+            <div class="text-center">
+                <i data-lucide="target" class="h-16 w-16 mx-auto mb-4 text-blue-200"></i>
+                <h3 class="text-2xl font-bold mb-4">Realistic Training</h3>
+                <p class="text-blue-100">
+                    Experience real-world attack scenarios without real-world consequences. 
+                    Learn from mistakes in a safe environment.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Grid -->
+    <div class="mb-16">
+        <h2 class="text-3xl font-bold text-gray-900 text-center mb-12">Why Choose AttackSim?</h2>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="text-center">
+                <div class="bg-red-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <i data-lucide="mail" class="h-8 w-8 text-red-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Phishing Detection</h3>
+                <p class="text-gray-600">
+                    Learn to identify sophisticated phishing attempts with realistic email simulations
+                </p>
+            </div>
+            <div class="text-center">
+                <div class="bg-orange-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <i data-lucide="lock" class="h-8 w-8 text-orange-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Credential Protection</h3>
+                <p class="text-gray-600">
+                    Practice spotting fake login pages and credential harvesting attempts
+                </p>
+            </div>
+            <div class="text-center">
+                <div class="bg-blue-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <i data-lucide="trending-up" class="h-8 w-8 text-blue-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Progress Tracking</h3>
+                <p class="text-gray-600">
+                    Monitor your improvement with detailed analytics and personalized insights
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Educational Approach -->
+    <div class="bg-gray-50 rounded-2xl p-8 mb-16">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-3xl font-bold text-gray-900 text-center mb-8">Our Educational Approach</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <i data-lucide="brain" class="h-5 w-5 mr-2 text-blue-600"></i>
+                        Learn by Doing
+                    </h3>
+                    <p class="text-gray-600 mb-4">
+                        Hands-on experience with real attack scenarios helps build muscle memory and 
+                        instinctive responses to threats.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <i data-lucide="heart" class="h-5 w-5 mr-2 text-red-600"></i>
+                        Safe & Ethical
+                    </h3>
+                    <p class="text-gray-600 mb-4">
+                        All simulations require explicit consent and focus on education rather than 
+                        exploitation.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <i data-lucide="refresh-cw" class="h-5 w-5 mr-2 text-green-600"></i>
+                        Continuous Improvement
+                    </h3>
+                    <p class="text-gray-600 mb-4">
+                        Regular assessments and varied scenarios ensure continuous learning and 
+                        skill development.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <i data-lucide="users" class="h-5 w-5 mr-2 text-purple-600"></i>
+                        Team Building
+                    </h3>
+                    <p class="text-gray-600 mb-4">
+                        Build organization-wide security awareness through collaborative learning 
+                        and shared experiences.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ethics Statement -->
+    <div class="border border-blue-200 bg-blue-50 rounded-lg p-8">
+        <div class="max-w-4xl mx-auto text-center">
+            <i data-lucide="shield" class="h-12 w-12 text-blue-600 mx-auto mb-4"></i>
+            <h2 class="text-2xl font-bold text-blue-900 mb-4">Ethical Commitment</h2>
+            <p class="text-blue-800 mb-4">
+                AttackSim is committed to ethical cybersecurity education. We believe in building defenses, 
+                not exploiting vulnerabilities.
+            </p>
+            <ul class="text-left text-blue-800 max-w-2xl mx-auto space-y-2">
+                <li class="flex items-start">
+                    <i data-lucide="check" class="h-5 w-5 mr-2 mt-0.5 text-green-600"></i>
+                    Explicit consent required for all simulations
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check" class="h-5 w-5 mr-2 mt-0.5 text-green-600"></i>
+                    Educational focus with immediate learning opportunities
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check" class="h-5 w-5 mr-2 mt-0.5 text-green-600"></i>
+                    No real data collection or exploitation
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check" class="h-5 w-5 mr-2 mt-0.5 text-green-600"></i>
+                    Compliance with privacy laws and regulations
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize Lucide icons
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>
+{% endblock %} 

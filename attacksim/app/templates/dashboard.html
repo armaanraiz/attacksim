@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% set title = "Dashboard" %}
+
+{% block nav_subtitle %}Your Security Training Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Welcome back, {{ current_user.get_full_name() }}!</h1>
+                <p class="text-gray-600 mt-1">Continue your cybersecurity training journey</p>
+            </div>
+            <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ 'bg-green-100 text-green-800' if current_user.consent_given else 'bg-gray-100 text-gray-800' }}">
+                <i data-lucide="{{ 'check-circle' if current_user.consent_given else 'x-circle' }}" class="h-4 w-4 mr-1"></i>
+                {{ "Active Training" if current_user.consent_given else "Training Inactive" }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="grid md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white border-0 shadow-md rounded-lg p-6">
+            <div class="pb-2">
+                <h3 class="text-sm font-medium text-gray-600">Total Interactions</h3>
+                <div class="text-2xl font-bold text-blue-600">{{ stats.total_interactions }}</div>
+            </div>
+            <p class="text-xs text-gray-500">+3 from last week</p>
+        </div>
+
+        <div class="bg-white border-0 shadow-md rounded-lg p-6">
+            <div class="pb-2">
+                <h3 class="text-sm font-medium text-gray-600">Successful Detections</h3>
+                <div class="text-2xl font-bold text-green-600">{{ stats.successful_detections }}</div>
+            </div>
+            <p class="text-xs text-gray-500">+5 from last week</p>
+        </div>
+
+        <div class="bg-white border-0 shadow-md rounded-lg p-6">
+            <div class="pb-2">
+                <h3 class="text-sm font-medium text-gray-600">Detection Rate</h3>
+                <div class="text-2xl font-bold text-orange-600">{{ stats.detection_rate }}%</div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div class="bg-orange-600 h-2 rounded-full" style="width: {{ stats.detection_rate }}%"></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">+8% improvement</p>
+        </div>
+
+        <div class="bg-white border-0 shadow-md rounded-lg p-6">
+            <div class="pb-2">
+                <h3 class="text-sm font-medium text-gray-600">Current Streak</h3>
+                <div class="text-2xl font-bold text-cyan-600">5</div>
+            </div>
+            <p class="text-xs text-gray-500">Days in a row</p>
+        </div>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-8">
+        <!-- Recent Activity -->
+        <div class="lg:col-span-2">
+            <div class="bg-white border-0 shadow-md rounded-lg">
+                <div class="p-6 border-b">
+                    <h2 class="text-lg font-semibold flex items-center">
+                        <i data-lucide="clock" class="h-5 w-5 mr-2"></i>
+                        Recent Activity
+                    </h2>
+                    <p class="text-gray-600 text-sm mt-1">Your latest simulation interactions</p>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        {% for interaction in recent_interactions %}
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 rounded-full {{ 'bg-red-100' if interaction.interaction_type.value == 'email_opened' else 'bg-orange-100' if interaction.interaction_type.value == 'login_attempted' else 'bg-blue-100' }}">
+                                        {% if interaction.interaction_type.value == 'email_opened' %}
+                                            <i data-lucide="mail" class="h-4 w-4 text-red-600"></i>
+                                        {% elif interaction.interaction_type.value == 'login_attempted' %}
+                                            <i data-lucide="lock" class="h-4 w-4 text-orange-600"></i>
+                                        {% else %}
+                                            <i data-lucide="link" class="h-4 w-4 text-blue-600"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900">
+                                            {% if interaction.interaction_type.value == 'email_opened' %}
+                                                Phishing Email
+                                            {% elif interaction.interaction_type.value == 'login_attempted' %}
+                                                Fake Login
+                                            {% else %}
+                                                Suspicious Link
+                                            {% endif %}
+                                        </p>
+                                        <p class="text-sm text-gray-600">{{ interaction.scenario.name }}</p>
+                                        <p class="text-xs text-gray-500">{{ interaction.created_at.strftime('%Y-%m-%d') }}</p>
+                                    </div>
+                                </div>
+                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ 'bg-green-100 text-green-800' if interaction.detected_threat else 'bg-red-100 text-red-800' }}">
+                                    {% if interaction.detected_threat %}
+                                        <i data-lucide="check-circle" class="h-3 w-3 mr-1"></i>
+                                        Detected
+                                    {% else %}
+                                        <i data-lucide="alert-triangle" class="h-3 w-3 mr-1"></i>
+                                        Missed
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-8">
+                                <i data-lucide="activity" class="h-12 w-12 text-gray-400 mx-auto mb-4"></i>
+                                <p class="text-gray-500">No recent activity</p>
+                                <p class="text-sm text-gray-400">Start a simulation to see your progress here</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div>
+            <div class="bg-white border-0 shadow-md rounded-lg mb-6">
+                <div class="p-6 border-b">
+                    <h2 class="text-lg font-semibold">Quick Actions</h2>
+                    <p class="text-gray-600 text-sm mt-1">Manage your training experience</p>
+                </div>
+                <div class="p-6 space-y-3">
+                    <a href="{{ url_for('main.profile') }}" class="w-full flex items-center justify-start p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                        <i data-lucide="user" class="h-4 w-4 mr-2"></i>
+                        View Profile
+                    </a>
+                    {% if current_user.consent_given %}
+                        <form method="POST" action="{{ url_for('main.revoke_consent') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="w-full flex items-center justify-start p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                                <i data-lucide="x-circle" class="h-4 w-4 mr-2"></i>
+                                Disable Training
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="POST" action="{{ url_for('main.give_consent') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="w-full flex items-center justify-start p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                                <i data-lucide="check-circle" class="h-4 w-4 mr-2"></i>
+                                Enable Training
+                            </button>
+                        </form>
+                    {% endif %}
+                    <a href="{{ url_for('security.change_password') }}" class="w-full flex items-center justify-start p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                        <i data-lucide="key" class="h-4 w-4 mr-2"></i>
+                        Change Password
+                    </a>
+                    <a href="#" class="w-full flex items-center justify-start p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
+                        <i data-lucide="play" class="h-4 w-4 mr-2"></i>
+                        Start New Simulation
+                    </a>
+                </div>
+            </div>
+
+            <!-- Progress Chart Placeholder -->
+            <div class="bg-white border-0 shadow-md rounded-lg">
+                <div class="p-6 border-b">
+                    <h2 class="text-lg font-semibold">Progress Over Time</h2>
+                </div>
+                <div class="p-6">
+                    <div class="h-32 bg-gradient-to-r from-blue-100 to-green-100 rounded-lg flex items-center justify-center">
+                        <i data-lucide="trending-up" class="h-8 w-8 text-blue-600"></i>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2 text-center">
+                        Your detection rate has improved by 15% this month
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize Lucide icons after page load
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>
+{% endblock %} 

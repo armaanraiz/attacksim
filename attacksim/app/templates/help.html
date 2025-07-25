@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% set title = "Help Center" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Help Center</h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            Find answers to common questions and learn how to make the most of your AttackSim experience.
+        </p>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid md:grid-cols-3 gap-6 mb-16">
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+            <i data-lucide="play-circle" class="h-12 w-12 text-blue-600 mx-auto mb-4"></i>
+            <h3 class="text-lg font-semibold mb-2">Getting Started</h3>
+            <p class="text-gray-600 mb-4">New to AttackSim? Learn the basics</p>
+            <a href="#getting-started" class="text-blue-600 font-medium hover:text-blue-700">
+                Read Guide →
+            </a>
+        </div>
+        <div class="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+            <i data-lucide="shield" class="h-12 w-12 text-green-600 mx-auto mb-4"></i>
+            <h3 class="text-lg font-semibold mb-2">Safety Tips</h3>
+            <p class="text-gray-600 mb-4">Learn about ethical training practices</p>
+            <a href="#safety" class="text-green-600 font-medium hover:text-green-700">
+                Learn More →
+            </a>
+        </div>
+        <div class="bg-purple-50 border border-purple-200 rounded-lg p-6 text-center">
+            <i data-lucide="phone" class="h-12 w-12 text-purple-600 mx-auto mb-4"></i>
+            <h3 class="text-lg font-semibold mb-2">Contact Support</h3>
+            <p class="text-gray-600 mb-4">Need help? We're here for you</p>
+            <a href="#contact" class="text-purple-600 font-medium hover:text-purple-700">
+                Get Help →
+            </a>
+        </div>
+    </div>
+
+    <!-- Getting Started Section -->
+    <section id="getting-started" class="mb-16">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8">Getting Started</h2>
+        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div class="divide-y divide-gray-200">
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3">1</span>
+                        Create Your Account
+                    </h3>
+                    <p class="text-gray-600 ml-11">
+                        Sign up for AttackSim with your email address. You'll need to verify your email to get started.
+                    </p>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3">2</span>
+                        Give Consent for Training
+                    </h3>
+                    <p class="text-gray-600 ml-11">
+                        Before participating in simulations, you must explicitly consent to receive training emails and simulations. 
+                        You can revoke this consent at any time from your dashboard.
+                    </p>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3">3</span>
+                        Complete Your First Simulation
+                    </h3>
+                    <p class="text-gray-600 ml-11">
+                        Start with a basic phishing email simulation. Take your time to analyze the content and 
+                        look for warning signs before making your decision.
+                    </p>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3">4</span>
+                        Track Your Progress
+                    </h3>
+                    <p class="text-gray-600 ml-11">
+                        Monitor your improvement through the dashboard. Review your detection rates and learn from 
+                        the educational content provided after each simulation.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="mb-16">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8">Frequently Asked Questions</h2>
+        <div class="space-y-4">
+            <div class="bg-white border border-gray-200 rounded-lg">
+                <details class="group">
+                    <summary class="flex justify-between items-center cursor-pointer p-6 hover:bg-gray-50">
+                        <h3 class="text-lg font-medium">Is my personal data safe?</h3>
+                        <i data-lucide="chevron-down" class="h-5 w-5 text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="px-6 pb-6">
+                        <p class="text-gray-600">
+                            Yes, absolutely. AttackSim is designed for educational purposes only. We don't collect any real sensitive data 
+                            during simulations. All interactions are logged for learning purposes only, and you can opt out at any time.
+                        </p>
+                    </div>
+                </details>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-lg">
+                <details class="group">
+                    <summary class="flex justify-between items-center cursor-pointer p-6 hover:bg-gray-50">
+                        <h3 class="text-lg font-medium">Can I opt out of training simulations?</h3>
+                        <i data-lucide="chevron-down" class="h-5 w-5 text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="px-6 pb-6">
+                        <p class="text-gray-600">
+                            Yes, you can revoke your consent at any time from your dashboard. Once you opt out, you won't receive any 
+                            further simulations, but you can still access educational content and your historical progress.
+                        </p>
+                    </div>
+                </details>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-lg">
+                <details class="group">
+                    <summary class="flex justify-between items-center cursor-pointer p-6 hover:bg-gray-50">
+                        <h3 class="text-lg font-medium">What should I do if I receive a suspicious email outside of training?</h3>
+                        <i data-lucide="chevron-down" class="h-5 w-5 text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="px-6 pb-6">
+                        <p class="text-gray-600">
+                            If you receive a suspicious email in your real inbox: 1) Don't click any links or download attachments, 
+                            2) Report it to your IT security team, 3) Delete the email. Use the skills you've learned in AttackSim 
+                            to identify red flags like urgent language, suspicious senders, and unusual requests.
+                        </p>
+                    </div>
+                </details>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-lg">
+                <details class="group">
+                    <summary class="flex justify-between items-center cursor-pointer p-6 hover:bg-gray-50">
+                        <h3 class="text-lg font-medium">How often will I receive training simulations?</h3>
+                        <i data-lucide="chevron-down" class="h-5 w-5 text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="px-6 pb-6">
+                        <p class="text-gray-600">
+                            The frequency depends on your organization's settings and your learning progress. Typically, you might 
+                            receive 1-2 simulations per week, with more frequency for users who need additional practice.
+                        </p>
+                    </div>
+                </details>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-lg">
+                <details class="group">
+                    <summary class="flex justify-between items-center cursor-pointer p-6 hover:bg-gray-50">
+                        <h3 class="text-lg font-medium">What happens if I fall for a simulation?</h3>
+                        <i data-lucide="chevron-down" class="h-5 w-5 text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="px-6 pb-6">
+                        <p class="text-gray-600">
+                            Don't worry! The whole point is to learn from mistakes in a safe environment. You'll immediately see 
+                            educational content explaining what to look for next time. There are no penalties - only learning opportunities.
+                        </p>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- Safety Section -->
+    <section id="safety" class="mb-16">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8">Safety & Ethics</h2>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-8">
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-blue-900">Our Commitments</h3>
+                    <ul class="space-y-3 text-blue-800">
+                        <li class="flex items-start">
+                            <i data-lucide="check" class="h-5 w-5 mr-2 mt-0.5 text-green-600"></i>
+                            Explicit consent required for all training
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check" class="h-5 w-5 mr-2 mt-0.5 text-green-600"></i>
+                            No real data collection during simulations
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check" class="h-5 w-5 mr-2 mt-0.5 text-green-600"></i>
+                            Immediate educational content after each simulation
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check" class="h-5 w-5 mr-2 mt-0.5 text-green-600"></i>
+                            Right to opt out at any time
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-blue-900">Best Practices</h3>
+                    <ul class="space-y-3 text-blue-800">
+                        <li class="flex items-start">
+                            <i data-lucide="lightbulb" class="h-5 w-5 mr-2 mt-0.5 text-yellow-600"></i>
+                            Take time to analyze each simulation carefully
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="lightbulb" class="h-5 w-5 mr-2 mt-0.5 text-yellow-600"></i>
+                            Review educational content even if you succeed
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="lightbulb" class="h-5 w-5 mr-2 mt-0.5 text-yellow-600"></i>
+                            Apply learned skills to real-world situations
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="lightbulb" class="h-5 w-5 mr-2 mt-0.5 text-yellow-600"></i>
+                            Share knowledge with colleagues (when appropriate)
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="mb-16">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8">Contact Support</h2>
+        <div class="bg-gray-50 rounded-lg p-8">
+            <div class="max-w-2xl mx-auto text-center">
+                <i data-lucide="help-circle" class="h-16 w-16 text-blue-600 mx-auto mb-4"></i>
+                <h3 class="text-2xl font-semibold mb-4">Need More Help?</h3>
+                <p class="text-gray-600 mb-6">
+                    Our support team is here to help you with any questions about AttackSim. 
+                    We typically respond within 24 hours.
+                </p>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-center space-x-4">
+                        <i data-lucide="mail" class="h-5 w-5 text-gray-500"></i>
+                        <span class="text-gray-700">support@attacksim.local</span>
+                    </div>
+                    <div class="flex items-center justify-center space-x-4">
+                        <i data-lucide="clock" class="h-5 w-5 text-gray-500"></i>
+                        <span class="text-gray-700">Response time: 24 hours</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize Lucide icons
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>
+{% endblock %} 

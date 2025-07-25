@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% set title = "View Group" %}
+
+{% block nav_subtitle %}Group Details{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-4 mb-4">
+                <a href="{{ url_for('admin.groups') }}" 
+                   class="text-gray-600 hover:text-gray-800 transition-colors">
+                    <i data-lucide="arrow-left" class="h-5 w-5"></i>
+                </a>
+                <h1 class="text-3xl font-bold text-gray-900">{{ group.name }}</h1>
+                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    {{ group.get_member_count() }} members
+                </div>
+            </div>
+            <p class="text-gray-600">{{ group.description or "No description provided" }}</p>
+        </div>
+
+        <!-- Group Stats -->
+        <div class="grid md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white border-0 shadow-md rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-full bg-blue-100">
+                        <i data-lucide="users" class="h-6 w-6 text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Registered Members</p>
+                        <p class="text-2xl font-bold text-blue-600">{{ group.members|length }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border-0 shadow-md rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-full bg-green-100">
+                        <i data-lucide="mail" class="h-6 w-6 text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">External Emails</p>
+                        <p class="text-2xl font-bold text-green-600">{{ group.get_external_emails()|length }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border-0 shadow-md rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-full bg-orange-100">
+                        <i data-lucide="send" class="h-6 w-6 text-orange-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Campaigns</p>
+                        <p class="text-2xl font-bold text-orange-600">{{ campaigns|length }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex space-x-4 mb-8">
+            <a href="{{ url_for('admin.edit_group', group_id=group.id) }}" 
+               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors">
+                <i data-lucide="edit" class="h-4 w-4 mr-2 inline"></i>
+                Edit Group
+            </a>
+            <a href="{{ url_for('admin.create_campaign') }}?group_id={{ group.id }}" 
+               class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors">
+                <i data-lucide="mail" class="h-4 w-4 mr-2 inline"></i>
+                Create Campaign
+            </a>
+        </div>
+
+        <!-- Group Details -->
+        <div class="grid lg:grid-cols-2 gap-8 mb-8">
+            <!-- Registered Members -->
+            <div class="bg-white border-0 shadow-md rounded-lg">
+                <div class="p-6 border-b">
+                    <h2 class="text-lg font-semibold">Registered Members ({{ group.members|length }})</h2>
+                </div>
+                <div class="p-6">
+                    {% if group.members %}
+                        <div class="space-y-3">
+                            {% for member in group.members %}
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ member.get_full_name() }}</p>
+                                    <p class="text-sm text-gray-600">{{ member.email }}</p>
+                                    {% if member.department %}
+                                        <p class="text-xs text-gray-500">{{ member.department }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                               {{ 'bg-green-100 text-green-800' if member.consent_given else 'bg-gray-100 text-gray-800' }}">
+                                        {{ 'Consented' if member.consent_given else 'No Consent' }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <i data-lucide="users" class="h-12 w-12 text-gray-400 mx-auto mb-4"></i>
+                            <p class="text-gray-500">No registered members in this group.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- External Emails -->
+            <div class="bg-white border-0 shadow-md rounded-lg">
+                <div class="p-6 border-b">
+                    <h2 class="text-lg font-semibold">External Emails ({{ group.get_external_emails()|length }})</h2>
+                </div>
+                <div class="p-6">
+                    {% if group.get_external_emails() %}
+                        <div class="space-y-2">
+                            {% for email in group.get_external_emails() %}
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <p class="text-gray-900">{{ email }}</p>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    External
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <i data-lucide="mail" class="h-12 w-12 text-gray-400 mx-auto mb-4"></i>
+                            <p class="text-gray-500">No external emails in this group.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Campaigns -->
+        <div class="bg-white border-0 shadow-md rounded-lg">
+            <div class="p-6 border-b">
+                <h2 class="text-lg font-semibold">Campaigns ({{ campaigns|length }})</h2>
+                <p class="text-gray-600 text-sm mt-1">Email campaigns targeting this group</p>
+            </div>
+            <div class="overflow-x-auto">
+                {% if campaigns %}
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Campaign
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Recipients
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Open Rate
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Created
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for campaign in campaigns %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ campaign.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ campaign.subject }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                               {{ 'bg-green-100 text-green-800' if campaign.status.value == 'sent' else
+                                                  'bg-blue-100 text-blue-800' if campaign.status.value == 'draft' else
+                                                  'bg-yellow-100 text-yellow-800' if campaign.status.value == 'scheduled' else
+                                                  'bg-gray-100 text-gray-800' }}">
+                                        {{ campaign.status.value.title() }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ campaign.total_recipients }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ campaign.get_open_rate() }}%
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ campaign.created_at.strftime('%m/%d/%Y') }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <a href="{{ url_for('admin.view_campaign', campaign_id=campaign.id) }}" 
+                                       class="text-blue-600 hover:text-blue-800 transition-colors">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="text-center py-8">
+                        <i data-lucide="send" class="h-12 w-12 text-gray-400 mx-auto mb-4"></i>
+                        <p class="text-gray-500">No campaigns found for this group.</p>
+                        <p class="text-gray-400 text-sm">Create a campaign to start sending phishing simulations.</p>
+                        <div class="mt-4">
+                            <a href="{{ url_for('admin.create_campaign') }}?group_id={{ group.id }}" 
+                               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition-colors">
+                                Create Campaign
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Group Information -->
+        <div class="bg-white border-0 shadow-md rounded-lg mt-8">
+            <div class="p-6 border-b">
+                <h2 class="text-lg font-semibold">Group Information</h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Created By</label>
+                        <p class="text-gray-900">{{ group.creator.get_full_name() }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Created Date</label>
+                        <p class="text-gray-900">{{ group.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Last Updated</label>
+                        <p class="text-gray-900">{{ group.updated_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Status</label>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                   {{ 'bg-green-100 text-green-800' if group.is_active else 'bg-red-100 text-red-800' }}">
+                            {{ 'Active' if group.is_active else 'Inactive' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Lucide icons
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>
+{% endblock %} 

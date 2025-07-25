@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% set title = "Create Email Campaign" %}
+
+{% block nav_subtitle %}Create Email Campaign{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-4 mb-4">
+                <a href="{{ url_for('admin.campaigns') }}" 
+                   class="text-gray-600 hover:text-gray-800 transition-colors">
+                    <i data-lucide="arrow-left" class="h-5 w-5"></i>
+                </a>
+                <h1 class="text-3xl font-bold text-gray-900">Create Email Campaign</h1>
+            </div>
+            <p class="text-gray-600">Draft and send phishing emails to user groups</p>
+        </div>
+
+        <!-- Create Campaign Form -->
+        <div class="bg-white rounded-lg shadow-md">
+            <form method="POST" class="p-6 space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <!-- Basic Information -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        Campaign Information
+                    </h3>
+                    
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                                Campaign Name *
+                            </label>
+                            <input type="text" 
+                                   id="name" 
+                                   name="name" 
+                                   required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                   placeholder="e.g., UNSW Students Phishing Test Q1">
+                        </div>
+                        
+                        <div>
+                            <label for="group_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Target Group *
+                            </label>
+                            <select id="group_id" 
+                                    name="group_id" 
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Select a group</option>
+                                {% for group in groups %}
+                                    <option value="{{ group.id }}" 
+                                            {% if request.args.get('group_id') == group.id|string %}selected{% endif %}>
+                                        {{ group.name }} ({{ group.get_member_count() }} members)
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="scenario_id" class="block text-sm font-medium text-gray-700 mb-2">
+                            Phishing Scenario (Optional)
+                        </label>
+                        <select id="scenario_id" 
+                                name="scenario_id" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Select a scenario</option>
+                            {% for scenario in scenarios %}
+                                <option value="{{ scenario.id }}" 
+                                        data-subject="{{ scenario.email_subject or '' }}"
+                                        data-body="{{ scenario.email_body or '' }}"
+                                        data-sender-name="{{ scenario.sender_name or '' }}"
+                                        data-sender-email="{{ scenario.sender_email or '' }}">
+                                    {{ scenario.name }} ({{ scenario.difficulty_level }}/5 difficulty)
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Selecting a scenario will pre-fill the email template below
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                            Description
+                        </label>
+                        <textarea id="description" 
+                                  name="description" 
+                                  rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Optional description of this campaign"></textarea>
+                    </div>
+                </div>
+
+                <!-- Email Configuration -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        Email Configuration
+                    </h3>
+                    
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="sender_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                Sender Name *
+                            </label>
+                            <input type="text" 
+                                   id="sender_name" 
+                                   name="sender_name" 
+                                   required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                   placeholder="e.g., PayPal Security Team">
+                        </div>
+                        
+                        <div>
+                            <label for="sender_email" class="block text-sm font-medium text-gray-700 mb-2">
+                                Sender Email *
+                            </label>
+                            <input type="email" 
+                                   id="sender_email" 
+                                   name="sender_email" 
+                                   required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                   placeholder="e.g., security-alert@paypaI-security.com">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">
+                            Email Subject *
+                        </label>
+                        <input type="text" 
+                               id="subject" 
+                               name="subject" 
+                               required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="e.g., 🚨 URGENT: Your PayPal Account Has Been Limited">
+                    </div>
+                </div>
+
+                <!-- Email Body -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        Email Content
+                    </h3>
+                    
+                    <div>
+                        <label for="body" class="block text-sm font-medium text-gray-700 mb-2">
+                            Email Body (HTML) *
+                        </label>
+                        <textarea id="body" 
+                                  name="body" 
+                                  rows="15"
+                                  required
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                                  placeholder="Enter your HTML email content here..."></textarea>
+                        <div class="text-xs text-gray-500 mt-2 space-y-1">
+                            <p><strong>Available placeholders:</strong></p>
+                            <p><code>{{recipient_email}}</code> - Will be replaced with recipient's email</p>
+                            <p><code>{{tracking_url}}</code> - Will be replaced with the tracking URL for the phishing simulation</p>
+                            <p><strong>Note:</strong> All links in the email will be automatically replaced with tracking URLs</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Preview -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        Email Preview
+                    </h3>
+                    
+                    <div class="border border-gray-300 rounded-md p-4 bg-gray-50">
+                        <div class="mb-4">
+                            <button type="button" 
+                                    id="preview-btn"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition-colors">
+                                Preview Email
+                            </button>
+                        </div>
+                        
+                        <div id="email-preview" class="hidden">
+                            <div class="bg-white border rounded-md p-4">
+                                <div class="border-b pb-3 mb-3 text-sm text-gray-600">
+                                    <div><strong>From:</strong> <span id="preview-sender"></span></div>
+                                    <div><strong>Subject:</strong> <span id="preview-subject"></span></div>
+                                    <div><strong>To:</strong> recipient@example.com</div>
+                                </div>
+                                <div id="preview-body" class="prose max-w-none"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <a href="{{ url_for('admin.campaigns') }}" 
+                       class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
+                        Create Campaign
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Lucide icons
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        
+        // Scenario selection auto-fill
+        const scenarioSelect = document.getElementById('scenario_id');
+        const subjectInput = document.getElementById('subject');
+        const bodyTextarea = document.getElementById('body');
+        const senderNameInput = document.getElementById('sender_name');
+        const senderEmailInput = document.getElementById('sender_email');
+        
+        scenarioSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.value) {
+                subjectInput.value = selectedOption.dataset.subject || '';
+                bodyTextarea.value = selectedOption.dataset.body || '';
+                senderNameInput.value = selectedOption.dataset.senderName || '';
+                senderEmailInput.value = selectedOption.dataset.senderEmail || '';
+            }
+        });
+        
+        // Email preview functionality
+        const previewBtn = document.getElementById('preview-btn');
+        const emailPreview = document.getElementById('email-preview');
+        const previewSender = document.getElementById('preview-sender');
+        const previewSubject = document.getElementById('preview-subject');
+        const previewBody = document.getElementById('preview-body');
+        
+        previewBtn.addEventListener('click', function() {
+            const senderName = senderNameInput.value || 'Sender Name';
+            const senderEmail = senderEmailInput.value || 'sender@example.com';
+            const subject = subjectInput.value || 'Email Subject';
+            let body = bodyTextarea.value || 'Email body content...';
+            
+            // Replace placeholders for preview
+            body = body.replace(/\{\{recipient_email\}\}/g, 'recipient@example.com');
+            body = body.replace(/\{\{tracking_url\}\}/g, 'https://example.com/phishing-simulation');
+            
+            previewSender.textContent = `${senderName} <${senderEmail}>`;
+            previewSubject.textContent = subject;
+            previewBody.innerHTML = body;
+            
+            emailPreview.classList.remove('hidden');
+            previewBtn.textContent = 'Update Preview';
+        });
+        
+        // Form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const groupId = document.getElementById('group_id').value;
+            
+            if (!groupId) {
+                e.preventDefault();
+                alert('Please select a target group.');
+                return;
+            }
+        });
+    });
+</script>
+{% endblock %} 

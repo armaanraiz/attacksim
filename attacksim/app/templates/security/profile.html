@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% set title = "Profile" %}
+
+{% block nav_subtitle %}Your Profile{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Profile</h1>
+            <p class="text-gray-600 mt-2">Manage your account information and training preferences</p>
+        </div>
+
+        <!-- Profile Information -->
+        <div class="bg-white border-0 shadow-md rounded-lg mb-8">
+            <div class="p-6 border-b">
+                <h2 class="text-lg font-semibold">Account Information</h2>
+            </div>
+            <div class="p-6">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <p class="text-gray-900 mt-1">{{ user.get_full_name() }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email Address</label>
+                        <p class="text-gray-900 mt-1">{{ user.email }}</p>
+                    </div>
+                    {% if user.department %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Department</label>
+                        <p class="text-gray-900 mt-1">{{ user.department }}</p>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Account Status</label>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-1">
+                            Active
+                        </span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Member Since</label>
+                        <p class="text-gray-900 mt-1">{{ user.created_at.strftime('%B %d, %Y') }}</p>
+                    </div>
+                    {% if user.last_login_at %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Last Login</label>
+                        <p class="text-gray-900 mt-1">{{ user.last_login_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Training Status -->
+        <div class="bg-white border-0 shadow-md rounded-lg mb-8">
+            <div class="p-6 border-b">
+                <h2 class="text-lg font-semibold">Training Status</h2>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Phishing Simulation Training</p>
+                        <p class="text-xs text-gray-500">Receive educational phishing emails to improve security awareness</p>
+                    </div>
+                    <div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                                   {{ 'bg-green-100 text-green-800' if user.consent_given else 'bg-gray-100 text-gray-800' }}">
+                            <i data-lucide="{{ 'check-circle' if user.consent_given else 'x-circle' }}" class="h-4 w-4 mr-1"></i>
+                            {{ 'Enabled' if user.consent_given else 'Disabled' }}
+                        </span>
+                    </div>
+                </div>
+                
+                {% if user.consent_given %}
+                    {% if user.consent_date %}
+                    <p class="text-sm text-gray-600 mb-4">
+                        Training enabled on {{ user.consent_date.strftime('%B %d, %Y') }}
+                    </p>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('main.revoke_consent') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" 
+                                onclick="return confirm('Are you sure you want to disable training simulations?')"
+                                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm transition-colors">
+                            <i data-lucide="x-circle" class="h-4 w-4 mr-2 inline"></i>
+                            Disable Training
+                        </button>
+                    </form>
+                {% else %}
+                    <p class="text-sm text-gray-600 mb-4">
+                        Enable training to participate in phishing simulation exercises and improve your security awareness.
+                    </p>
+                    <form method="POST" action="{{ url_for('main.give_consent') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" 
+                                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm transition-colors">
+                            <i data-lucide="check-circle" class="h-4 w-4 mr-2 inline"></i>
+                            Enable Training
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Training Statistics -->
+        {% if user.consent_given %}
+        {% set stats = user.get_interaction_stats() %}
+        <div class="bg-white border-0 shadow-md rounded-lg mb-8">
+            <div class="p-6 border-b">
+                <h2 class="text-lg font-semibold">Training Statistics</h2>
+                <p class="text-gray-600 text-sm mt-1">Your performance in security awareness training</p>
+            </div>
+            <div class="p-6">
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="p-4 bg-blue-50 rounded-lg">
+                            <i data-lucide="activity" class="h-8 w-8 text-blue-600 mx-auto mb-2"></i>
+                            <p class="text-2xl font-bold text-blue-600">{{ stats.total_interactions }}</p>
+                            <p class="text-sm text-gray-600">Total Interactions</p>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="p-4 bg-green-50 rounded-lg">
+                            <i data-lucide="shield" class="h-8 w-8 text-green-600 mx-auto mb-2"></i>
+                            <p class="text-2xl font-bold text-green-600">{{ stats.successful_detections }}</p>
+                            <p class="text-sm text-gray-600">Threats Detected</p>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="p-4 bg-orange-50 rounded-lg">
+                            <i data-lucide="trending-up" class="h-8 w-8 text-orange-600 mx-auto mb-2"></i>
+                            <p class="text-2xl font-bold text-orange-600">{{ stats.detection_rate }}%</p>
+                            <p class="text-sm text-gray-600">Detection Rate</p>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if stats.total_interactions > 0 %}
+                <div class="mt-6">
+                    <div class="flex justify-between text-sm text-gray-600 mb-2">
+                        <span>Detection Progress</span>
+                        <span>{{ stats.detection_rate }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-orange-600 h-2 rounded-full" style="width: {{ stats.detection_rate }}%"></div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Account Actions -->
+        <div class="bg-white border-0 shadow-md rounded-lg">
+            <div class="p-6 border-b">
+                <h2 class="text-lg font-semibold">Account Actions</h2>
+            </div>
+            <div class="p-6 space-y-3">
+                <a href="{{ url_for_security('change_password') }}" 
+                   class="w-full flex items-center justify-start p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                    <i data-lucide="key" class="h-4 w-4 mr-3"></i>
+                    <div>
+                        <p class="font-medium text-gray-900">Change Password</p>
+                        <p class="text-sm text-gray-500">Update your account password</p>
+                    </div>
+                </a>
+                
+                {% if user.google_id %}
+                <form method="POST" action="{{ url_for('oauth.unlink_google') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" 
+                            class="w-full flex items-center justify-start p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                        <i data-lucide="unlink" class="h-4 w-4 mr-3"></i>
+                        <div class="text-left">
+                            <p class="font-medium text-gray-900">Unlink Google Account</p>
+                            <p class="text-sm text-gray-500">Remove Google sign-in integration</p>
+                        </div>
+                    </button>
+                </form>
+                {% else %}
+                <a href="{{ url_for('oauth.link_google') }}" 
+                   class="w-full flex items-center justify-start p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                    <i data-lucide="link" class="h-4 w-4 mr-3"></i>
+                    <div>
+                        <p class="font-medium text-gray-900">Link Google Account</p>
+                        <p class="text-sm text-gray-500">Enable Google sign-in for easier access</p>
+                    </div>
+                </a>
+                {% endif %}
+                
+                <a href="{{ url_for('main.dashboard') }}" 
+                   class="w-full flex items-center justify-start p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
+                    <i data-lucide="arrow-left" class="h-4 w-4 mr-3"></i>
+                    <div>
+                        <p class="font-medium">Back to Dashboard</p>
+                        <p class="text-sm text-blue-100">Return to your main dashboard</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Lucide icons
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>
+{% endblock %} 

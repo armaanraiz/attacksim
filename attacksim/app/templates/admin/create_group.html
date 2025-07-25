@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% set title = "Create Group" %}
+
+{% block nav_subtitle %}Create Group{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-4 mb-4">
+                <a href="{{ url_for('admin.groups') }}" 
+                   class="text-gray-600 hover:text-gray-800 transition-colors">
+                    <i data-lucide="arrow-left" class="h-5 w-5"></i>
+                </a>
+                <h1 class="text-3xl font-bold text-gray-900">Create New Group</h1>
+            </div>
+            <p class="text-gray-600">Create a group to organize users for phishing campaigns</p>
+        </div>
+
+        <!-- Create Group Form -->
+        <div class="bg-white rounded-lg shadow-md">
+            <form method="POST" class="p-6 space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <!-- Basic Information -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        Basic Information
+                    </h3>
+                    
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                            Group Name *
+                        </label>
+                        <input type="text" 
+                               id="name" 
+                               name="name" 
+                               required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="e.g., Students of UNSW">
+                    </div>
+                    
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                            Description
+                        </label>
+                        <textarea id="description" 
+                                  name="description" 
+                                  rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Optional description of the group"></textarea>
+                    </div>
+                </div>
+
+                <!-- Registered Users -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        Registered Users
+                    </h3>
+                    
+                    {% if users %}
+                        <div class="space-y-2 max-h-64 overflow-y-auto border border-gray-200 rounded-md p-3">
+                            <div class="flex items-center space-x-2 mb-3">
+                                <input type="checkbox" 
+                                       id="select-all-users" 
+                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <label for="select-all-users" class="text-sm font-medium text-gray-700">
+                                    Select All Users
+                                </label>
+                            </div>
+                            
+                            {% for user in users %}
+                                <div class="flex items-center space-x-2">
+                                    <input type="checkbox" 
+                                           id="user-{{ user.id }}" 
+                                           name="registered_users" 
+                                           value="{{ user.id }}"
+                                           class="user-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <label for="user-{{ user.id }}" class="text-sm text-gray-700 flex-1">
+                                        {{ user.get_full_name() }} ({{ user.email }})
+                                        {% if user.department %}
+                                            <span class="text-xs text-gray-500">- {{ user.department }}</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <p class="text-xs text-gray-500">
+                            {{ users|length }} registered users available (only users who have given consent are shown)
+                        </p>
+                    {% else %}
+                        <div class="text-center py-8 border border-gray-200 rounded-md bg-gray-50">
+                            <i data-lucide="users" class="h-8 w-8 text-gray-400 mx-auto mb-2"></i>
+                            <p class="text-gray-500">No registered users with consent available</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- External Emails -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        External Email Addresses
+                    </h3>
+                    
+                    <div>
+                        <label for="external_emails" class="block text-sm font-medium text-gray-700 mb-2">
+                            Email Addresses
+                        </label>
+                        <textarea id="external_emails" 
+                                  name="external_emails" 
+                                  rows="6"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Enter email addresses separated by commas or new lines&#10;&#10;Example:&#10;student1@university.edu,&#10;student2@university.edu,&#10;teacher@university.edu"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Enter email addresses separated by commas or new lines. These emails will receive phishing campaigns even if they're not registered users.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <a href="{{ url_for('admin.groups') }}" 
+                       class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
+                        Create Group
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Lucide icons
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        
+        // Select all users functionality
+        const selectAllCheckbox = document.getElementById('select-all-users');
+        const userCheckboxes = document.querySelectorAll('.user-checkbox');
+        
+        if (selectAllCheckbox && userCheckboxes.length > 0) {
+            selectAllCheckbox.addEventListener('change', function() {
+                userCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+            
+            // Update select all checkbox when individual checkboxes change
+            userCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const allChecked = Array.from(userCheckboxes).every(cb => cb.checked);
+                    const noneChecked = Array.from(userCheckboxes).every(cb => !cb.checked);
+                    
+                    selectAllCheckbox.checked = allChecked;
+                    selectAllCheckbox.indeterminate = !allChecked && !noneChecked;
+                });
+            });
+        }
+        
+        // Email validation helper
+        const emailTextarea = document.getElementById('external_emails');
+        if (emailTextarea) {
+            emailTextarea.addEventListener('blur', function() {
+                const emails = this.value.split(/[,\n]/).map(email => email.trim()).filter(email => email);
+                const validEmails = [];
+                const invalidEmails = [];
+                
+                emails.forEach(email => {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (emailRegex.test(email)) {
+                        validEmails.push(email);
+                    } else if (email) {
+                        invalidEmails.push(email);
+                    }
+                });
+                
+                if (invalidEmails.length > 0) {
+                    alert(`Invalid email addresses found: ${invalidEmails.join(', ')}`);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %} 

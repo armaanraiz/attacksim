@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% set title = "Home" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white py-20">
+    <div class="absolute inset-0 bg-black opacity-10"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="mb-8">
+            <i data-lucide="shield" class="h-24 w-24 mx-auto mb-6 text-blue-200"></i>
+            <h1 class="text-5xl font-bold mb-4">AttackSim</h1>
+            <p class="text-xl text-blue-100 mb-2">Simulated threats. Real awareness.</p>
+            <p class="text-lg text-blue-200 max-w-3xl mx-auto">
+                Master cybersecurity through realistic simulations. Learn to identify phishing emails, suspicious links,
+                and fake login pages in a safe, controlled environment.
+            </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('security.register') }}" class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-md text-lg font-medium transition-colors">
+                    Get Started
+                </a>
+                <a href="{{ url_for('main.about') }}" class="border border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 rounded-md text-lg font-medium bg-transparent transition-colors">
+                    Learn More
+                </a>
+            {% else %}
+                <a href="{{ url_for('main.dashboard') }}" class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-md text-lg font-medium transition-colors">
+                    Go to Dashboard
+                </a>
+                {% if not current_user.consent_given %}
+                    <a href="{{ url_for('main.consent') }}" class="border border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 rounded-md text-lg font-medium bg-transparent transition-colors">
+                        Enable Training
+                    </a>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Training Simulations</h2>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                Practice identifying real-world cybersecurity threats through interactive simulations
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-white border-0 shadow-md rounded-lg hover:shadow-lg transition-shadow duration-300">
+                <div class="p-6 text-center">
+                    <i data-lucide="mail" class="h-12 w-12 text-blue-600 mx-auto mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-4">Phishing Simulations</h3>
+                    <p class="text-gray-600 text-center">
+                        Learn to identify suspicious emails, fake senders, and malicious attachments through realistic
+                        phishing scenarios.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-white border-0 shadow-md rounded-lg hover:shadow-lg transition-shadow duration-300">
+                <div class="p-6 text-center">
+                    <i data-lucide="lock" class="h-12 w-12 text-green-600 mx-auto mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-4">Fake Login Pages</h3>
+                    <p class="text-gray-600 text-center">
+                        Practice spotting fraudulent login pages that mimic popular services like Facebook, Gmail, and banking
+                        sites.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-white border-0 shadow-md rounded-lg hover:shadow-lg transition-shadow duration-300">
+                <div class="p-6 text-center">
+                    <i data-lucide="link" class="h-12 w-12 text-orange-600 mx-auto mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-4">Suspicious Links</h3>
+                    <p class="text-gray-600 text-center">
+                        Develop skills to analyze URLs, identify shortened links, and recognize potentially dangerous web
+                        destinations.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section (shown if user is logged in) -->
+{% if current_user.is_authenticated %}
+    {% set stats = current_user.get_interaction_stats() %}
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Your Progress</h2>
+                <p class="text-lg text-gray-600">Track your cybersecurity awareness improvement</p>
+            </div>
+
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="bg-white text-center border-0 shadow-md rounded-lg p-6">
+                    <div class="pb-2">
+                        <i data-lucide="target" class="h-8 w-8 text-blue-600 mx-auto mb-2"></i>
+                        <div class="text-2xl font-bold text-blue-600">{{ stats.total_interactions }}</div>
+                    </div>
+                    <p class="text-gray-600 font-medium">Total Simulations</p>
+                </div>
+
+                <div class="bg-white text-center border-0 shadow-md rounded-lg p-6">
+                    <div class="pb-2">
+                        <i data-lucide="shield" class="h-8 w-8 text-green-600 mx-auto mb-2"></i>
+                        <div class="text-2xl font-bold text-green-600">{{ stats.successful_detections }}</div>
+                    </div>
+                    <p class="text-gray-600 font-medium">Threats Detected</p>
+                </div>
+
+                <div class="bg-white text-center border-0 shadow-md rounded-lg p-6">
+                    <div class="pb-2">
+                        <i data-lucide="trending-up" class="h-8 w-8 text-orange-600 mx-auto mb-2"></i>
+                        <div class="text-2xl font-bold text-orange-600">{{ stats.detection_rate }}%</div>
+                    </div>
+                    <p class="text-gray-600 font-medium">Detection Rate</p>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div class="bg-orange-600 h-2 rounded-full" style="width: {{ stats.detection_rate }}%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white text-center border-0 shadow-md rounded-lg p-6">
+                    <div class="pb-2">
+                        <i data-lucide="award" class="h-8 w-8 text-cyan-600 mx-auto mb-2"></i>
+                        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
+                            {{ "Active" if current_user.consent_given else "Inactive" }}
+                        </div>
+                    </div>
+                    <p class="text-gray-600 font-medium">Training Status</p>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endif %}
+
+<!-- Safety Notice -->
+<section class="py-16 bg-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="border border-blue-200 bg-blue-50 rounded-lg p-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i data-lucide="shield" class="h-5 w-5 text-blue-600"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-blue-800">
+                        <strong class="font-semibold">Ethical Guidelines:</strong> AttackSim is designed for educational
+                        purposes only. All simulations are conducted in a controlled environment to improve cybersecurity
+                        awareness. Never use these techniques for malicious purposes. Always respect privacy and follow applicable
+                        laws and regulations.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize Lucide icons after page load
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>
+{% endblock %} 

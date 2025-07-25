@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% set title = "Training Consent" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <i data-lucide="shield-check" class="h-16 w-16 text-blue-600 mx-auto mb-4"></i>
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Training Consent</h1>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+            Enable security awareness training simulations to improve your cybersecurity skills
+        </p>
+    </div>
+
+    <!-- Current Status -->
+    <div class="mb-8">
+        <div class="bg-white border border-gray-200 rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Current Status</h2>
+            <div class="flex items-center space-x-3">
+                {% if current_user.consent_given %}
+                    <div class="bg-green-100 p-2 rounded-full">
+                        <i data-lucide="check-circle" class="h-6 w-6 text-green-600"></i>
+                    </div>
+                    <div>
+                        <p class="font-medium text-green-800">Training Enabled</p>
+                        <p class="text-sm text-green-600">
+                            You consented on {{ current_user.consent_date.strftime('%B %d, %Y') if current_user.consent_date else 'Unknown date' }}
+                        </p>
+                    </div>
+                {% else %}
+                    <div class="bg-gray-100 p-2 rounded-full">
+                        <i data-lucide="x-circle" class="h-6 w-6 text-gray-600"></i>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-800">Training Disabled</p>
+                        <p class="text-sm text-gray-600">You have not yet consented to receive training simulations</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- What You're Consenting To -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">What You're Consenting To</h2>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+            <h3 class="text-lg font-semibold text-blue-900 mb-4">Training Simulations</h3>
+            <div class="space-y-4 text-blue-800">
+                <div class="flex items-start space-x-3">
+                    <i data-lucide="mail" class="h-5 w-5 text-blue-600 mt-0.5"></i>
+                    <div>
+                        <p class="font-medium">Phishing Email Simulations</p>
+                        <p class="text-sm text-blue-700">Receive realistic phishing emails to test your detection skills</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <i data-lucide="globe" class="h-5 w-5 text-blue-600 mt-0.5"></i>
+                    <div>
+                        <p class="font-medium">Fake Website Simulations</p>
+                        <p class="text-sm text-blue-700">Practice identifying fraudulent login pages and malicious websites</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <i data-lucide="link" class="h-5 w-5 text-blue-600 mt-0.5"></i>
+                    <div>
+                        <p class="font-medium">Suspicious Link Testing</p>
+                        <p class="text-sm text-blue-700">Learn to analyze and identify potentially dangerous URLs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Your Rights -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Your Rights & Protections</h2>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i data-lucide="shield" class="h-5 w-5 mr-2 text-green-600"></i>
+                    Data Protection
+                </h3>
+                <ul class="space-y-2 text-gray-600">
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">•</span>
+                        No real sensitive data is collected
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">•</span>
+                        Interactions logged for learning only
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">•</span>
+                        Data encrypted and securely stored
+                    </li>
+                </ul>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i data-lucide="user-x" class="h-5 w-5 mr-2 text-blue-600"></i>
+                    Opt-Out Rights
+                </h3>
+                <ul class="space-y-2 text-gray-600">
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        Revoke consent at any time
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        Stop receiving simulations immediately
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        Keep access to educational content
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Educational Value -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Educational Benefits</h2>
+        <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <i data-lucide="brain" class="h-12 w-12 text-green-600 mx-auto mb-3"></i>
+                    <h3 class="font-semibold text-green-900 mb-2">Skill Building</h3>
+                    <p class="text-sm text-green-800">Develop real-world threat detection abilities</p>
+                </div>
+                <div class="text-center">
+                    <i data-lucide="trending-up" class="h-12 w-12 text-green-600 mx-auto mb-3"></i>
+                    <h3 class="font-semibold text-green-900 mb-2">Progress Tracking</h3>
+                    <p class="text-sm text-green-800">Monitor improvement with detailed analytics</p>
+                </div>
+                <div class="text-center">
+                    <i data-lucide="graduation-cap" class="h-12 w-12 text-green-600 mx-auto mb-3"></i>
+                    <h3 class="font-semibold text-green-900 mb-2">Continuous Learning</h3>
+                    <p class="text-sm text-green-800">Regular training to stay current with threats</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="text-center">
+        {% if current_user.consent_given %}
+            <form method="POST" action="{{ url_for('main.revoke_consent') }}" class="inline-block">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" 
+                        onclick="return confirm('Are you sure you want to disable training simulations?')"
+                        class="bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-8 rounded-md transition-colors">
+                    <i data-lucide="x-circle" class="h-5 w-5 mr-2 inline"></i>
+                    Disable Training
+                </button>
+            </form>
+            <p class="text-sm text-gray-600 mt-4">
+                You can disable training at any time. This will stop all simulations immediately.
+            </p>
+        {% else %}
+            <form method="POST" action="{{ url_for('main.give_consent') }}" class="inline-block">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-md transition-colors">
+                    <i data-lucide="check-circle" class="h-5 w-5 mr-2 inline"></i>
+                    Enable Training
+                </button>
+            </form>
+            <p class="text-sm text-gray-600 mt-4">
+                By clicking "Enable Training", you consent to receive educational security simulations.
+            </p>
+        {% endif %}
+    </div>
+
+    <!-- Additional Information -->
+    <div class="mt-12 border-t pt-8">
+        <div class="text-center">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Need More Information?</h3>
+            <div class="flex justify-center space-x-6">
+                <a href="{{ url_for('main.about') }}" class="text-blue-600 hover:text-blue-700 font-medium">
+                    <i data-lucide="info" class="h-4 w-4 mr-1 inline"></i>
+                    About AttackSim
+                </a>
+                <a href="{{ url_for('main.help') }}" class="text-blue-600 hover:text-blue-700 font-medium">
+                    <i data-lucide="help-circle" class="h-4 w-4 mr-1 inline"></i>
+                    Help Center
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize Lucide icons
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>
+{% endblock %} 

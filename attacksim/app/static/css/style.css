@@ -1,0 +1,288 @@
+/* AttackSim Custom Styles */
+
+:root {
+    --primary-color: #0d6efd;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --success-color: #198754;
+    --info-color: #0dcaf0;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+}
+
+/* Global Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+/* Navigation */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+/* Cards */
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Alerts */
+.alert {
+    border-radius: 12px;
+    border: none;
+}
+
+/* Statistics Cards */
+.stats-card {
+    border-radius: 15px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.stats-card:hover {
+    transform: scale(1.02);
+}
+
+/* Simulation Styles */
+.simulation-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.phishing-email {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+}
+
+.email-header {
+    background: #f8f9fa;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    border-radius: 8px 8px 0 0;
+}
+
+.email-body {
+    padding: 20px;
+    line-height: 1.6;
+}
+
+.suspicious-link {
+    color: var(--danger-color);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.suspicious-link:hover {
+    color: #b02a37;
+}
+
+/* Login Form Styles */
+.login-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+}
+
+.auth-card {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border: none;
+    border-radius: 15px;
+}
+
+/* Admin Styles */
+.admin-sidebar {
+    background: var(--light-color);
+    min-height: calc(100vh - 56px);
+    padding: 20px 0;
+}
+
+.admin-nav-link {
+    color: var(--dark-color);
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin: 5px 10px;
+    transition: all 0.2s ease-in-out;
+}
+
+.admin-nav-link:hover {
+    background: var(--primary-color);
+    color: white;
+    text-decoration: none;
+}
+
+.admin-nav-link.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Dashboard Widgets */
+.dashboard-widget {
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.widget-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+/* Progress Bars */
+.progress {
+    height: 10px;
+    border-radius: 10px;
+}
+
+.progress-bar {
+    border-radius: 10px;
+}
+
+/* Scenario Status Badges */
+.status-badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.status-draft {
+    background: #6c757d;
+    color: white;
+}
+
+.status-active {
+    background: var(--success-color);
+    color: white;
+}
+
+.status-paused {
+    background: var(--warning-color);
+    color: #212529;
+}
+
+.status-completed {
+    background: var(--info-color);
+    color: #212529;
+}
+
+/* Educational Content */
+.education-content {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin: 20px 0;
+}
+
+.warning-signs {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 15px 0;
+}
+
+.warning-signs h5 {
+    color: #856404;
+}
+
+.warning-signs ul {
+    margin-bottom: 0;
+}
+
+.warning-signs li {
+    color: #856404;
+    margin-bottom: 5px;
+}
+
+/* Feedback Forms */
+.feedback-form {
+    background: var(--light-color);
+    border-radius: 15px;
+    padding: 25px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .dashboard-widget {
+        margin-bottom: 15px;
+        padding: 15px;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Utility Classes */
+.text-gradient {
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.shadow-custom {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.border-radius-lg {
+    border-radius: 15px;
+}
+
+/* Dark mode support (for future enhancement) */
+@media (prefers-color-scheme: dark) {
+    .card {
+        background-color: #1e1e1e;
+        border-color: #333;
+    }
+    
+    .email-header {
+        background-color: #2d2d2d;
+        border-color: #444;
+    }
+} 

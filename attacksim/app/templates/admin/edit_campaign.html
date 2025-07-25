@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% set title = "Edit Campaign" %}
+
+{% block nav_subtitle %}Edit Email Campaign{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-4 mb-4">
+                <a href="{{ url_for('admin.view_campaign', campaign_id=campaign.id) }}" 
+                   class="text-gray-600 hover:text-gray-800 transition-colors">
+                    <i data-lucide="arrow-left" class="h-5 w-5"></i>
+                </a>
+                <h1 class="text-3xl font-bold text-gray-900">Edit Campaign</h1>
+            </div>
+            <p class="text-gray-600">Update the email campaign configuration</p>
+        </div>
+
+        <!-- Edit Campaign Form -->
+        <div class="bg-white border-0 shadow-md rounded-lg">
+            <div class="p-6 border-b">
+                <h2 class="text-lg font-semibold">Campaign Configuration</h2>
+                <p class="text-gray-600 text-sm mt-1">Update the campaign details below</p>
+            </div>
+            <form method="POST" class="p-6 space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <!-- Campaign Name -->
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Campaign Name *
+                    </label>
+                    <input type="text" 
+                           id="name" 
+                           name="name" 
+                           value="{{ campaign.name }}"
+                           required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Enter campaign name">
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                        Description
+                    </label>
+                    <textarea id="description" 
+                              name="description" 
+                              rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Enter campaign description (optional)">{{ campaign.description or '' }}</textarea>
+                </div>
+
+                <!-- Target Group -->
+                <div>
+                    <label for="group_id" class="block text-sm font-medium text-gray-700 mb-2">
+                        Target Group *
+                    </label>
+                    <select id="group_id" 
+                            name="group_id" 
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Select a target group</option>
+                        {% for group in groups %}
+                            <option value="{{ group.id }}" 
+                                    {{ 'selected' if group.id == campaign.group_id else '' }}>
+                                {{ group.name }} ({{ group.get_member_count() }} members)
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Phishing Scenario -->
+                <div>
+                    <label for="scenario_id" class="block text-sm font-medium text-gray-700 mb-2">
+                        Phishing Scenario (Optional)
+                    </label>
+                    <select id="scenario_id" 
+                            name="scenario_id" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">No scenario (custom email)</option>
+                        {% for scenario in scenarios %}
+                            <option value="{{ scenario.id }}"
+                                    {{ 'selected' if scenario.id == campaign.scenario_id else '' }}>
+                                {{ scenario.name }} (Level {{ scenario.difficulty_level }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Select a pre-configured scenario or leave blank for custom email</p>
+                </div>
+
+                <!-- Email Configuration -->
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Email Configuration</h3>
+                    
+                    <!-- Subject -->
+                    <div class="mb-4">
+                        <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">
+                            Email Subject *
+                        </label>
+                        <input type="text" 
+                               id="subject" 
+                               name="subject" 
+                               value="{{ campaign.subject }}"
+                               required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Enter email subject line">
+                    </div>
+
+                    <!-- Email Body -->
+                    <div class="mb-4">
+                        <label for="body" class="block text-sm font-medium text-gray-700 mb-2">
+                            Email Body *
+                        </label>
+                        <textarea id="body" 
+                                  name="body" 
+                                  rows="10"
+                                  required
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Enter the email body content...">{{ campaign.body }}</textarea>
+                        <p class="text-xs text-gray-500 mt-1">
+                            You can use HTML formatting. Use {{recipient_email}} for personalization and {{tracking_url}} for click tracking.
+                        </p>
+                    </div>
+
+                    <!-- Sender Configuration -->
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="sender_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                Sender Name *
+                            </label>
+                            <input type="text" 
+                                   id="sender_name" 
+                                   name="sender_name" 
+                                   value="{{ campaign.sender_name }}"
+                                   required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                   placeholder="e.g., IT Support">
+                        </div>
+
+                        <div>
+                            <label for="sender_email" class="block text-sm font-medium text-gray-700 mb-2">
+                                Sender Email *
+                            </label>
+                            <input type="email" 
+                                   id="sender_email" 
+                                   name="sender_email" 
+                                   value="{{ campaign.sender_email }}"
+                                   required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                   placeholder="e.g., support@company.com">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex items-center justify-between pt-6 border-t">
+                    <a href="{{ url_for('admin.view_campaign', campaign_id=campaign.id) }}" 
+                       class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-md transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-colors">
+                        <i data-lucide="save" class="h-4 w-4 mr-2 inline"></i>
+                        Update Campaign
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Current Campaign Info -->
+        <div class="bg-white border-0 shadow-md rounded-lg mt-8">
+            <div class="p-6 border-b">
+                <h2 class="text-lg font-semibold">Current Campaign Status</h2>
+            </div>
+            <div class="p-6">
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="p-4 bg-blue-50 rounded-lg">
+                            <i data-lucide="mail" class="h-8 w-8 text-blue-600 mx-auto mb-2"></i>
+                            <p class="text-2xl font-bold text-blue-600">{{ campaign.total_recipients }}</p>
+                            <p class="text-sm text-gray-600">Recipients</p>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="p-4 bg-green-50 rounded-lg">
+                            <i data-lucide="calendar" class="h-8 w-8 text-green-600 mx-auto mb-2"></i>
+                            <p class="text-lg font-bold text-green-600">{{ campaign.status.value.title() }}</p>
+                            <p class="text-sm text-gray-600">Status</p>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="p-4 bg-orange-50 rounded-lg">
+                            <i data-lucide="clock" class="h-8 w-8 text-orange-600 mx-auto mb-2"></i>
+                            <p class="text-lg font-bold text-orange-600">{{ campaign.created_at.strftime('%m/%d/%Y') }}</p>
+                            <p class="text-sm text-gray-600">Created</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Lucide icons
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const groupId = document.getElementById('group_id').value;
+        
+        if (!groupId) {
+            e.preventDefault();
+            alert('Please select a target group.');
+            return;
+        }
+    });
+
+    // Auto-update recipient count when group changes
+    const groupSelect = document.getElementById('group_id');
+    groupSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            // Extract member count from option text
+            const text = selectedOption.text;
+            const match = text.match(/\((\d+) members\)/);
+            if (match) {
+                const recipientCountElement = document.querySelector('.text-2xl.font-bold.text-blue-600');
+                if (recipientCountElement) {
+                    recipientCountElement.textContent = match[1];
+                }
+            }
+        }
+    });
+</script>
+{% endblock %} 
