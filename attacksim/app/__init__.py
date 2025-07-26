@@ -3,7 +3,7 @@ import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail
-from flask_security import Security, SQLAlchemyUserDatastore
+# from flask_security import Security, SQLAlchemyUserDatastore  # Temporarily disabled
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -11,7 +11,7 @@ from flask_limiter.util import get_remote_address
 # Initialize extensions
 db = SQLAlchemy()
 mail = Mail()
-security = Security()
+# security = Security()  # Temporarily disabled
 cors = CORS()
 limiter = Limiter(key_func=get_remote_address)
 
@@ -42,24 +42,25 @@ def create_app(config_name=None):
     
     limiter.init_app(app)
     
-    # Import models
-    from app.models import User, Role
+    # Import models (temporarily skip User/Role for Flask-Security)
+    # from app.models import User, Role
     
-    # Setup Flask-Security
-    user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-    security.init_app(app, user_datastore)
+    # Setup Flask-Security (temporarily disabled)
+    # user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+    # security.init_app(app, user_datastore)
     
     # Create tables
     with app.app_context():
         db.create_all()
     
-    # Register blueprints
-    from app.routes import main, auth, admin, api, simulations
-    app.register_blueprint(main.bp)
-    app.register_blueprint(auth.bp)
-    app.register_blueprint(admin.bp)
+    # Register blueprints - only register the API for now
+    # from app.routes import main, auth, admin, api, simulations
+    from app.routes import api
+    # app.register_blueprint(main.bp)
+    # app.register_blueprint(auth.bp)
+    # app.register_blueprint(admin.bp)
     app.register_blueprint(api.bp)
-    app.register_blueprint(simulations.bp)
+    # app.register_blueprint(simulations.bp)
     
     # Add security headers for production
     @app.after_request
