@@ -2,40 +2,76 @@ import os
 import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_security import Security, SQLAlchemyUserDatastore
 from flask_mail import Mail
-from flask_wtf.csrf import CSRFProtect
+from flask_security import Security, SQLAlchemyUserDatastore
+from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from config import config
 
 # Initialize extensions
 db = SQLAlchemy()
 mail = Mail()
-csrf = CSRFProtect()
-limiter = Limiter(key_func=get_remote_address)
 security = Security()
+cors = CORS()
+limiter = Limiter(key_func=get_remote_address)
 
 def create_app(config_name=None):
-    """Application factory function"""
-    if config_name is None:
-        config_name = os.environ.get('FLASK_ENV', 'default')
-    
     app = Flask(__name__)
+    
+    # Load configuration
+    if config_name is None:
+        config_name = os.environ.get('FLASK_CONFIG', 'default')
+    
+    from config import config
     app.config.from_object(config[config_name])
     
-    # Initialize extensions with app
+    # Initialize extensions
     db.init_app(app)
     mail.init_app(app)
-    csrf.init_app(app)
+    
+    # Configure CORS for production
+    cors_origins = app.config.get('CORS_ORIGINS', 'http://localhost:3000').split(',')
+    cors.init_app(app, resources={
+        r"/api/*": {
+            "origins": cors_origins,
+            "methods": ["GET", "POST", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True
+        }
+    })
+    
     limiter.init_app(app)
     
-    # Setup Flask-Security-Too
-    from app.models.user import User, Role
+    # Import models
+    from app.models import User, Role
+    
+    # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
     security.init_app(app, user_datastore)
     
-    # Configure logging
+    # Create tables
+    with app.app_context():
+        db.create_all()
+    
+    # Register blueprints
+    from app.routes import main, auth, admin, api, simulations
+    app.register_blueprint(main.bp)
+    app.register_blueprint(auth.bp)
+    app.register_blueprint(admin.bp)
+    app.register_blueprint(api.bp)
+    app.register_blueprint(simulations.bp)
+    
+    # Add security headers for production
+    @app.after_request
+    def security_headers(response):
+        if app.config.get('FLASK_ENV') == 'production':
+            response.headers['X-Content-Type-Options'] = 'nosniff'
+            response.headers['X-Frame-Options'] = 'DENY'
+            response.headers['X-XSS-Protection'] = '1; mode=block'
+            response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        return response
+    
+    # Configure logging for production
     if not app.debug and not app.testing:
         if not os.path.exists('logs'):
             os.mkdir('logs')
@@ -48,42 +84,5 @@ def create_app(config_name=None):
         app.logger.addHandler(file_handler)
         app.logger.setLevel(logging.INFO)
         app.logger.info('AttackSim startup')
-    
-    # Register blueprints
-    from app.routes.oauth import bp as oauth_bp
-    app.register_blueprint(oauth_bp, url_prefix='/oauth')
-    
-    from app.routes.admin import bp as admin_bp
-    app.register_blueprint(admin_bp, url_prefix='/admin')
-    
-    from app.routes.simulations import bp as simulations_bp
-    app.register_blueprint(simulations_bp, url_prefix='/sim')
-    
-    from app.routes.tracking import bp as tracking_bp
-    app.register_blueprint(tracking_bp)
-    
-    from app.routes.main import bp as main_bp
-    app.register_blueprint(main_bp)
-    
-    # Template context processors
-    @app.context_processor
-    def inject_now():
-        from datetime import datetime
-        return {'now': datetime.utcnow()}
-    
-    # Create database tables
-    with app.app_context():
-        db.create_all()
-        
-        # Create default roles if they don't exist (only if tables exist)
-        try:
-            if not user_datastore.find_role('admin'):
-                user_datastore.create_role(name='admin', description='Administrator')
-            if not user_datastore.find_role('user'):
-                user_datastore.create_role(name='user', description='Regular User')
-            db.session.commit()
-        except Exception:
-            # Tables don't exist yet, skip role creation
-            pass
     
     return app 

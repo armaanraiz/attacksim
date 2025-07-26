@@ -275,35 +275,147 @@ def view_user(user_id):
 @admin_required
 def analytics():
     """Advanced analytics dashboard"""
+    from datetime import datetime, timedelta
+    from sqlalchemy import func
+    
+    # Time-based analytics
+    now = datetime.utcnow()
+    last_30_days = now - timedelta(days=30)
+    last_7_days = now - timedelta(days=7)
+    
     # Overall statistics
     total_users = User.query.count()
     total_interactions = Interaction.query.count()
+    total_campaigns = EmailCampaign.query.count()
+    
+    # Recent activity
+    recent_interactions = Interaction.query.filter(
+        Interaction.created_at >= last_30_days
+    ).count()
+    
+    recent_submissions = Interaction.query.filter(
+        Interaction.created_at >= last_30_days,
+        Interaction.interaction_type == InteractionType.FORM_SUBMITTED
+    ).count()
+    
+    # Campaign performance
+    campaigns = EmailCampaign.query.all()
+    campaign_stats = []
+    for campaign in campaigns:
+        recipients = campaign.recipients.count()
+        opened = campaign.recipients.filter(EmailRecipient.opened_at.isnot(None)).count()
+        clicked = campaign.recipients.filter(EmailRecipient.clicked_at.isnot(None)).count()
+        
+        # Get submissions for this campaign's scenario
+        submitted = 0
+        detected = 0
+        if campaign.scenario_id:
+            scenario_interactions = Interaction.query.filter_by(scenario_id=campaign.scenario_id).all()
+            submitted = sum(1 for i in scenario_interactions if i.interaction_type == InteractionType.FORM_SUBMITTED)
+            detected = sum(1 for i in scenario_interactions if i.detected_threat)
+        
+        stats = {
+            'id': campaign.id,
+            'name': campaign.name,
+            'status': campaign.status.value,
+            'total_recipients': recipients,
+            'emails_opened': opened,
+            'links_clicked': clicked,
+            'credentials_submitted': submitted,
+            'threats_detected': detected,
+            'open_rate': round((opened / recipients * 100) if recipients > 0 else 0, 1),
+            'click_rate': round((clicked / recipients * 100) if recipients > 0 else 0, 1),
+            'submission_rate': round((submitted / recipients * 100) if recipients > 0 else 0, 1),
+            'detection_rate': round((detected / recipients * 100) if recipients > 0 else 0, 1)
+        }
+        campaign_stats.append(stats)
     
     # Scenario performance
     scenarios = Scenario.query.all()
     scenario_stats = []
     for scenario in scenarios:
+        interactions = scenario.interactions.all()
+        total = len(interactions)
+        detected = sum(1 for i in interactions if i.detected_threat)
+        submitted = sum(1 for i in interactions if i.interaction_type == InteractionType.FORM_SUBMITTED)
+        
         stats = {
+            'id': scenario.id,
             'name': scenario.name,
             'type': scenario.scenario_type.value,
-            'success_rate': scenario.get_success_rate(),
-            'total_interactions': scenario.total_interactions
+            'total_interactions': total,
+            'credentials_submitted': submitted,
+            'threats_detected': detected,
+            'success_rate': round((detected / total * 100) if total > 0 else 0, 1),
+            'failure_rate': round((submitted / total * 100) if total > 0 else 0, 1)
         }
         scenario_stats.append(stats)
     
     # User performance distribution
     user_stats = []
     for user in User.query.all():
-        stats = user.get_interaction_stats()
-        user_stats.append({
-            'username': user.username,
-            'detection_rate': stats['detection_rate'],
-            'total_interactions': stats['total_interactions']
+        if user.interactions.count() > 0:
+            interactions = user.interactions.all()
+            total = len(interactions)
+            detected = sum(1 for i in interactions if i.detected_threat)
+            submitted = sum(1 for i in interactions if i.interaction_type == InteractionType.FORM_SUBMITTED)
+            
+            user_stats.append({
+                'username': user.username,
+                'email': user.email,
+                'total_interactions': total,
+                'threats_detected': detected,
+                'credentials_submitted': submitted,
+                'detection_rate': round((detected / total * 100) if total > 0 else 0, 1)
+            })
+    
+    # Daily activity for charts (last 30 days)
+    daily_stats = []
+    for i in range(30):
+        date = now - timedelta(days=i)
+        day_start = date.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+        
+        day_interactions = Interaction.query.filter(
+            Interaction.created_at >= day_start,
+            Interaction.created_at < day_end
+        ).count()
+        
+        day_submissions = Interaction.query.filter(
+            Interaction.created_at >= day_start,
+            Interaction.created_at < day_end,
+            Interaction.interaction_type == InteractionType.FORM_SUBMITTED
+        ).count()
+        
+        daily_stats.append({
+            'date': day_start.strftime('%Y-%m-%d'),
+            'interactions': day_interactions,
+            'submissions': day_submissions
         })
     
+    daily_stats.reverse()  # Show oldest first
+    
+    # Summary statistics
+    summary_stats = {
+        'total_users': total_users,
+        'total_campaigns': total_campaigns,
+        'total_interactions': total_interactions,
+        'recent_interactions': recent_interactions,
+        'recent_submissions': recent_submissions,
+        'overall_detection_rate': round((sum(s['threats_detected'] for s in campaign_stats) / 
+                                       sum(s['total_recipients'] for s in campaign_stats) * 100) 
+                                      if sum(s['total_recipients'] for s in campaign_stats) > 0 else 0, 1),
+        'overall_submission_rate': round((sum(s['credentials_submitted'] for s in campaign_stats) / 
+                                        sum(s['total_recipients'] for s in campaign_stats) * 100) 
+                                       if sum(s['total_recipients'] for s in campaign_stats) > 0 else 0, 1)
+    }
+    
     return render_template('admin/analytics.html',
+                         campaign_stats=campaign_stats,
                          scenario_stats=scenario_stats,
-                         user_stats=user_stats)
+                         user_stats=user_stats,
+                         daily_stats=daily_stats,
+                         summary_stats=summary_stats)
 
 # Group Management Routes
 @bp.route('/groups')

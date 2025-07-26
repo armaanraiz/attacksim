@@ -12,6 +12,9 @@ class Config:
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')  # You'll need to set this as environment variable
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'it.help.service.alerts@gmail.com'
     
+    # CORS Configuration for multiple clone domains
+    CORS_ORIGINS = os.environ.get('CORS_ORIGINS') or 'http://localhost:3000'
+    
     # Flask-Security-Too Configuration
     SECURITY_PASSWORD_SALT = os.environ.get('SECURITY_PASSWORD_SALT') or 'your-security-password-salt'
     SECURITY_REGISTERABLE = True
@@ -72,9 +75,9 @@ class ProductionConfig(Config):
     TESTING = False
     
     # Production security
-    SESSION_COOKIE_SECURE = True
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'True').lower() == 'true'
+    SESSION_COOKIE_HTTPONLY = os.environ.get('SESSION_COOKIE_HTTPONLY', 'True').lower() == 'true'
+    SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
     
     # Production OAuth settings
     GOOGLE_OAUTH_REDIRECT_URI = os.environ.get('GOOGLE_OAUTH_REDIRECT_URI')
