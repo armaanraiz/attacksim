@@ -70,8 +70,11 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://user:password@localhost/attacksim'
+    # Handle both postgres:// and postgresql:// URL schemes
+    database_url = os.environ.get('DATABASE_URL') or 'postgresql://user:password@localhost/attacksim'
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    SQLALCHEMY_DATABASE_URI = database_url
     TESTING = False
     
     # Production security
