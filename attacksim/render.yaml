@@ -20,7 +20,7 @@ services:
           name: attacksim-db
           property: connectionString
       - key: CORS_ORIGINS
-        value: https://discord-clone-yourproject.vercel.app
+        value: https://discord-clone-tau-smoky.vercel.app
       
       # Gmail Email Configuration
       - key: MAIL_USERNAME
