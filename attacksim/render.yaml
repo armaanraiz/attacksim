@@ -21,6 +21,20 @@ services:
           property: connectionString
       - key: CORS_ORIGINS
         value: https://discord-clone-yourproject.vercel.app
+      
+      # Gmail Email Configuration
+      - key: MAIL_USERNAME
+        value: it.help.service.alerts@gmail.com
+      - key: MAIL_PASSWORD
+        value: epxuhfoclclpfykn
+      - key: MAIL_SERVER
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USE_TLS
+        value: "True"
+      - key: ADMIN_EMAIL
+        value: it.help.service.alerts@gmail.com
 
 databases:
   - name: attacksim-db
