@@ -865,7 +865,6 @@ def setup_first_admin():
         
         try:
             # Create admin role if it doesn't exist
-            from flask_security import current_app
             user_datastore = current_app.extensions['security'].datastore
             
             admin_role = user_datastore.find_role('admin')
