@@ -7,6 +7,7 @@ from flask_security import Security, SQLAlchemyUserDatastore
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_wtf.csrf import CSRFProtect
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -14,6 +15,7 @@ mail = Mail()
 security = Security()
 cors = CORS()
 limiter = Limiter(key_func=get_remote_address)
+csrf = CSRFProtect()
 
 def create_app(config_name=None):
     app = Flask(__name__)
@@ -28,6 +30,7 @@ def create_app(config_name=None):
     # Initialize extensions
     db.init_app(app)
     mail.init_app(app)
+    csrf.init_app(app)
     
     # Configure CORS for production
     cors_origins = app.config.get('CORS_ORIGINS', 'http://localhost:3000').split(',')
@@ -49,11 +52,11 @@ def create_app(config_name=None):
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
     security.init_app(app, user_datastore)
     
-    # Add CSRF token function to template context (using Flask-Security's CSRF)
+    # Add CSRF token function to template context
     @app.context_processor
     def inject_csrf_token():
-        from flask_security.utils import get_security
-        return dict(csrf_token=lambda: get_security().csrf.generate_csrf())
+        from flask_wtf.csrf import generate_csrf
+        return dict(csrf_token=generate_csrf)
     
     # Create tables
     with app.app_context():
