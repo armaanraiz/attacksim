@@ -4,10 +4,11 @@ from functools import wraps
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from app import db
-from app.models import User, Scenario, Interaction, Group, EmailCampaign, EmailRecipient
+from app.models import User, Scenario, Interaction, Group, EmailCampaign, EmailRecipient, Clone
 from app.models.scenario import ScenarioType, ScenarioStatus
 from app.models.interaction import InteractionResult
 from app.models.email_campaign import CampaignStatus
+from app.models.clone import CloneType, CloneStatus
 from app.utils.email_sender import PhishingEmailSender
 import json
 import os
@@ -572,6 +573,7 @@ def create_campaign():
         description = request.form.get('description', '')
         scenario_id = request.form.get('scenario_id')
         group_id = request.form.get('group_id')
+        clone_id = request.form.get('clone_id')
         subject = request.form.get('subject')
         body = request.form.get('body')
         sender_name = request.form.get('sender_name')
@@ -601,6 +603,7 @@ def create_campaign():
             description=description,
             scenario_id=scenario.id if scenario else None,
             group_id=group_id,
+            clone_id=clone_id if clone_id else None,
             subject=subject,
             body=body,
             sender_name=sender_name,
@@ -619,11 +622,12 @@ def create_campaign():
         flash(f'Campaign "{name}" created successfully.', 'success')
         return redirect(url_for('admin.view_campaign', campaign_id=campaign.id))
     
-    # Get scenarios and groups for the form
+    # Get scenarios, groups, and clones for the form
     scenarios = Scenario.query.filter_by(scenario_type=ScenarioType.PHISHING_EMAIL).all()
     groups = Group.query.filter_by(is_active=True).all()
+    clones = Clone.get_active_clones()
     
-    return render_template('admin/create_campaign.html', scenarios=scenarios, groups=groups)
+    return render_template('admin/create_campaign.html', scenarios=scenarios, groups=groups, clones=clones)
 
 @bp.route('/campaigns/<int:campaign_id>')
 @login_required
@@ -902,4 +906,166 @@ def setup_first_admin():
             flash(f'Error creating admin user: {str(e)}', 'error')
             return render_template('admin/setup_admin.html')
     
-    return render_template('admin/setup_admin.html') 
+    return render_template('admin/setup_admin.html')
+
+# ============== CLONE MANAGEMENT ROUTES ==============
+
+@bp.route('/clones')
+@login_required
+@admin_required
+def clones():
+    """List all clones"""
+    clones = Clone.query.order_by(Clone.created_at.desc()).all()
+    
+    # Group clones by type for better display
+    clones_by_type = {}
+    for clone in clones:
+        clone_type = clone.clone_type.value
+        if clone_type not in clones_by_type:
+            clones_by_type[clone_type] = []
+        clones_by_type[clone_type].append(clone)
+    
+    return render_template('admin/clones.html', 
+                         clones=clones, 
+                         clones_by_type=clones_by_type,
+                         clone_types=CloneType)
+
+@bp.route('/clones/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_clone():
+    """Create new clone"""
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description', '')
+        clone_type = request.form.get('clone_type')
+        base_url = request.form.get('base_url')
+        landing_path = request.form.get('landing_path', '/')
+        icon = request.form.get('icon', '🌐')
+        button_color = request.form.get('button_color', 'blue')
+        
+        if not all([name, clone_type, base_url]):
+            flash('Name, clone type, and base URL are required.', 'error')
+            return redirect(url_for('admin.create_clone'))
+        
+        # Validate clone type
+        try:
+            clone_type_enum = CloneType(clone_type)
+        except ValueError:
+            flash('Invalid clone type selected.', 'error')
+            return redirect(url_for('admin.create_clone'))
+        
+        # Validate URL format
+        if not base_url.startswith(('http://', 'https://')):
+            flash('Base URL must start with http:// or https://', 'error')
+            return redirect(url_for('admin.create_clone'))
+        
+        # Ensure landing path starts with /
+        if not landing_path.startswith('/'):
+            landing_path = '/' + landing_path
+        
+        # Create clone
+        clone = Clone(
+            name=name,
+            description=description,
+            clone_type=clone_type_enum,
+            base_url=base_url.rstrip('/'),
+            landing_path=landing_path,
+            icon=icon,
+            button_color=button_color,
+            created_by=current_user.id
+        )
+        
+        db.session.add(clone)
+        db.session.commit()
+        
+        flash(f'Clone "{name}" created successfully!', 'success')
+        return redirect(url_for('admin.clones'))
+    
+    return render_template('admin/create_clone.html', clone_types=CloneType)
+
+@bp.route('/clones/<int:clone_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_clone(clone_id):
+    """Edit existing clone"""
+    clone = Clone.query.get_or_404(clone_id)
+    
+    if request.method == 'POST':
+        clone.name = request.form.get('name', clone.name)
+        clone.description = request.form.get('description', clone.description)
+        
+        # Update clone type
+        clone_type = request.form.get('clone_type')
+        if clone_type:
+            try:
+                clone.clone_type = CloneType(clone_type)
+            except ValueError:
+                flash('Invalid clone type selected.', 'error')
+                return render_template('admin/edit_clone.html', clone=clone, clone_types=CloneType)
+        
+        # Update URLs
+        base_url = request.form.get('base_url')
+        if base_url:
+            if not base_url.startswith(('http://', 'https://')):
+                flash('Base URL must start with http:// or https://', 'error')
+                return render_template('admin/edit_clone.html', clone=clone, clone_types=CloneType)
+            clone.base_url = base_url.rstrip('/')
+        
+        landing_path = request.form.get('landing_path', clone.landing_path)
+        if not landing_path.startswith('/'):
+            landing_path = '/' + landing_path
+        clone.landing_path = landing_path
+        
+        # Update display configuration
+        clone.icon = request.form.get('icon', clone.icon)
+        clone.button_color = request.form.get('button_color', clone.button_color)
+        
+        # Update status
+        status = request.form.get('status')
+        if status:
+            try:
+                clone.status = CloneStatus(status)
+            except ValueError:
+                flash('Invalid status selected.', 'error')
+                return render_template('admin/edit_clone.html', clone=clone, clone_types=CloneType)
+        
+        db.session.commit()
+        flash(f'Clone "{clone.name}" updated successfully!', 'success')
+        return redirect(url_for('admin.clones'))
+    
+    return render_template('admin/edit_clone.html', 
+                         clone=clone, 
+                         clone_types=CloneType,
+                         clone_statuses=CloneStatus)
+
+@bp.route('/clones/<int:clone_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_clone(clone_id):
+    """Delete clone"""
+    clone = Clone.query.get_or_404(clone_id)
+    clone_name = clone.name
+    
+    db.session.delete(clone)
+    db.session.commit()
+    
+    flash(f'Clone "{clone_name}" deleted successfully!', 'success')
+    return redirect(url_for('admin.clones'))
+
+@bp.route('/clones/<int:clone_id>/test')
+@login_required
+@admin_required
+def test_clone(clone_id):
+    """Test clone URL (opens in new tab)"""
+    clone = Clone.query.get_or_404(clone_id)
+    test_url = clone.get_full_url(campaign_id=999, scenario_id=999, token='test_token')
+    return redirect(test_url)
+
+@bp.route('/api/clones/active')
+@login_required
+@admin_required
+def api_active_clones():
+    """API endpoint to get active clones for campaign creation"""
+    clones = Clone.get_active_clones()
+    return jsonify([clone.to_dict() for clone in clones]) 

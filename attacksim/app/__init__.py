@@ -46,9 +46,9 @@ def create_app(config_name=None):
     
     limiter.init_app(app)
     
-    # Import models for Flask-Security
+        # Import models for Flask-Security
     from app.models import User, Role
-    
+
     # Setup Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
     security.init_app(app, user_datastore)

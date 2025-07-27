@@ -30,14 +30,28 @@ def track_open(token):
 
 @bp.route('/track/click/<token>')
 def track_click(token):
-    """Track email click and redirect to simulation"""
+    """Track email click and redirect to clone or simulation"""
     try:
         recipient = EmailTracker.track_email_click(token, request)
         if recipient and recipient.campaign:
-            # Redirect to the phishing simulation with tracking token
-            return redirect(url_for('simulations.phishing_email', 
-                                  scenario_id=recipient.campaign.scenario_id, 
-                                  t=token))
+            # Check if campaign has an associated clone
+            if recipient.campaign.clone:
+                clone = recipient.campaign.clone
+                # Increment clone usage
+                clone.increment_usage()
+                # Redirect to the clone with tracking parameters
+                clone_url = clone.get_full_url(
+                    campaign_id=recipient.campaign.id,
+                    scenario_id=recipient.campaign.scenario_id,
+                    token=token
+                )
+                logger.info(f"Redirecting to clone: {clone_url}")
+                return redirect(clone_url)
+            else:
+                # Fallback to phishing simulation
+                return redirect(url_for('simulations.phishing_email', 
+                                      scenario_id=recipient.campaign.scenario_id, 
+                                      t=token))
     except Exception as e:
         logger.error(f"Failed to track email click: {str(e)}")
     

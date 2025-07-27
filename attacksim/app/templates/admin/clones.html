@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% set title = "Clone Management" %}
+
+{% block nav_subtitle %}Clone Management{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-3xl font-bold text-gray-900">Clone Management</h1>
+                    <span class="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded">
+                        {{ clones|length }} clones
+                    </span>
+                </div>
+                <a href="{{ url_for('admin.create_clone') }}" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    <i data-lucide="plus" class="h-4 w-4 inline mr-2"></i>
+                    Add Clone
+                </a>
+            </div>
+            <p class="text-gray-600">Manage phishing clone URLs for email campaigns</p>
+        </div>
+
+        {% if clones %}
+            <!-- Clones by Type -->
+            <div class="space-y-8">
+                {% for clone_type, type_clones in clones_by_type.items() %}
+                    <div class="bg-white rounded-lg shadow-md">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h2 class="text-xl font-semibold text-gray-900 capitalize">
+                                {{ clone_type.title() }} Clones ({{ type_clones|length }})
+                            </h2>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Clone
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            URL
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Usage
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for clone in type_clones %}
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <span class="text-2xl mr-3">{{ clone.icon }}</span>
+                                                    <div>
+                                                        <div class="text-sm font-medium text-gray-900">
+                                                            {{ clone.name }}
+                                                        </div>
+                                                        {% if clone.description %}
+                                                            <div class="text-sm text-gray-500">
+                                                                {{ clone.description[:50] }}
+                                                                {% if clone.description|length > 50 %}...{% endif %}
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="text-sm text-gray-900">
+                                                    {{ clone.base_url }}{{ clone.landing_path }}
+                                                </div>
+                                                <div class="text-xs text-gray-500">
+                                                    Created {{ clone.created_at.strftime('%Y-%m-%d') }}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                {% if clone.status.value == 'active' %}
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        <i data-lucide="check-circle" class="h-3 w-3 mr-1"></i>
+                                                        Active
+                                                    </span>
+                                                {% elif clone.status.value == 'maintenance' %}
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                        <i data-lucide="wrench" class="h-3 w-3 mr-1"></i>
+                                                        Maintenance
+                                                    </span>
+                                                {% else %}
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                        <i data-lucide="x-circle" class="h-3 w-3 mr-1"></i>
+                                                        Inactive
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <div>{{ clone.times_used }} times</div>
+                                                {% if clone.last_used %}
+                                                    <div class="text-xs text-gray-500">
+                                                        Last: {{ clone.last_used.strftime('%Y-%m-%d') }}
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                <a href="{{ url_for('admin.test_clone', clone_id=clone.id) }}" 
+                                                   target="_blank"
+                                                   class="text-blue-600 hover:text-blue-900 transition-colors"
+                                                   title="Test Clone">
+                                                    <i data-lucide="external-link" class="h-4 w-4"></i>
+                                                </a>
+                                                <a href="{{ url_for('admin.edit_clone', clone_id=clone.id) }}" 
+                                                   class="text-indigo-600 hover:text-indigo-900 transition-colors"
+                                                   title="Edit Clone">
+                                                    <i data-lucide="edit" class="h-4 w-4"></i>
+                                                </a>
+                                                <form method="POST" action="{{ url_for('admin.delete_clone', clone_id=clone.id) }}" 
+                                                      class="inline"
+                                                      onsubmit="return confirm('Are you sure you want to delete {{ clone.name }}?')">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                    <button type="submit" 
+                                                            class="text-red-600 hover:text-red-900 transition-colors"
+                                                            title="Delete Clone">
+                                                        <i data-lucide="trash-2" class="h-4 w-4"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-lg shadow-md p-8 text-center">
+                <div class="text-gray-400 mb-4">
+                    <i data-lucide="globe" class="h-16 w-16 mx-auto"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No clones configured</h3>
+                <p class="text-gray-600 mb-6">
+                    Create your first phishing clone to start using them in email campaigns.
+                </p>
+                <a href="{{ url_for('admin.create_clone') }}" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                    <i data-lucide="plus" class="h-4 w-4 inline mr-2"></i>
+                    Create First Clone
+                </a>
+            </div>
+        {% endif %}
+
+        <!-- Quick Setup Guide -->
+        <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <h3 class="text-lg font-medium text-blue-900 mb-4">
+                <i data-lucide="lightbulb" class="h-5 w-5 inline mr-2"></i>
+                Quick Setup Guide
+            </h3>
+            <div class="space-y-3 text-sm text-blue-800">
+                <div class="flex items-start space-x-2">
+                    <span class="font-medium">1.</span>
+                    <span>Deploy your phishing clones (Discord, Facebook, etc.) to platforms like Vercel</span>
+                </div>
+                <div class="flex items-start space-x-2">
+                    <span class="font-medium">2.</span>
+                    <span>Add the deployed URLs here as clones with appropriate types and settings</span>
+                </div>
+                <div class="flex items-start space-x-2">
+                    <span class="font-medium">3.</span>
+                    <span>Use the clones in your email campaigns by clicking the quick-add buttons</span>
+                </div>
+                <div class="flex items-start space-x-2">
+                    <span class="font-medium">4.</span>
+                    <span>Track user interactions when they click links and visit your clones</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

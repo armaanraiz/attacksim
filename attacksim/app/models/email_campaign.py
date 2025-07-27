@@ -24,6 +24,7 @@ class EmailCampaign(db.Model):
     # Campaign configuration
     scenario_id = db.Column(db.Integer, db.ForeignKey('scenarios.id'), nullable=True)
     group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=False)
+    clone_id = db.Column(db.Integer, db.ForeignKey('clones.id'), nullable=True)  # Associated clone for tracking
     status = db.Column(db.Enum(CampaignStatus), default=CampaignStatus.DRAFT, nullable=False)
     
     # Email details
@@ -63,8 +64,10 @@ class EmailCampaign(db.Model):
     
     # Relationships
     scenario = db.relationship('Scenario', backref='email_campaigns')
-    creator = db.relationship('User', backref='created_campaigns', foreign_keys=[created_by])
+    target_group = db.relationship('Group', backref='email_campaigns')
+    clone = db.relationship('Clone', backref='email_campaigns')
     recipients = db.relationship('EmailRecipient', backref='campaign', lazy='dynamic', cascade='all, delete-orphan')
+    creator = db.relationship('User', backref='created_campaigns', foreign_keys=[created_by])
     
     def __repr__(self):
         return f'<EmailCampaign {self.name}>'
