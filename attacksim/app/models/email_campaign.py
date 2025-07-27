@@ -64,7 +64,7 @@ class EmailCampaign(db.Model):
     
     # Relationships
     scenario = db.relationship('Scenario', backref='email_campaigns')
-    target_group = db.relationship('Group', backref='email_campaigns')
+    # target_group relationship is defined in Group model with backref='target_group'
     clone = db.relationship('Clone', backref='email_campaigns')
     recipients = db.relationship('EmailRecipient', backref='campaign', lazy='dynamic', cascade='all, delete-orphan')
     creator = db.relationship('User', backref='created_campaigns', foreign_keys=[created_by])
