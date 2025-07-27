@@ -785,4 +785,100 @@ def upload_campaign_image():
         })
     except Exception as e:
         current_app.logger.error(f"Image upload error: {str(e)}")
-        return jsonify({'success': False, 'error': 'An error occurred while uploading the image'}), 500 
+        return jsonify({'success': False, 'error': 'An error occurred while uploading the image'}), 500
+
+@bp.route('/setup/init-db')
+def init_database():
+    """Initialize database tables - accessible without login for initial setup"""
+    try:
+        # Check if tables already exist by checking for admin user
+        admin_exists = User.query.filter_by(is_admin=True).first()
+        if admin_exists:
+            return jsonify({
+                'success': False, 
+                'message': 'Database already initialized. Admin user exists.',
+                'redirect': url_for('admin.setup_first_admin')
+            })
+        
+        # Create all tables
+        db.create_all()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Database tables created successfully!',
+            'next_step': 'Create your first admin user',
+            'redirect': url_for('admin.setup_first_admin')
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Database initialization error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/setup/create-admin', methods=['GET', 'POST'])
+def setup_first_admin():
+    """Create the first admin user - accessible without login for initial setup"""
+    # Check if admin already exists
+    admin_exists = User.query.filter_by(is_admin=True).first()
+    if admin_exists:
+        flash('Admin user already exists. Please login normally.', 'info')
+        return redirect(url_for('security.login'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        # Validation
+        if not all([username, email, password, confirm_password]):
+            flash('All fields are required.', 'error')
+            return render_template('admin/setup_admin.html')
+        
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return render_template('admin/setup_admin.html')
+        
+        if len(password) < 8:
+            flash('Password must be at least 8 characters long.', 'error')
+            return render_template('admin/setup_admin.html')
+        
+        # Check if user already exists
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists.', 'error')
+            return render_template('admin/setup_admin.html')
+        
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered.', 'error')
+            return render_template('admin/setup_admin.html')
+        
+        try:
+            # Create admin user
+            import uuid
+            admin = User(
+                username=username,
+                email=email,
+                first_name="Admin",
+                last_name="User",
+                is_admin=True,
+                is_active=True,
+                consent_given=True,
+                fs_uniquifier=str(uuid.uuid4())
+            )
+            admin.set_password(password)
+            
+            db.session.add(admin)
+            db.session.commit()
+            
+            flash(f'Admin user "{username}" created successfully! You can now login.', 'success')
+            return redirect(url_for('security.login'))
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Admin creation error: {str(e)}")
+            flash(f'Error creating admin user: {str(e)}', 'error')
+            return render_template('admin/setup_admin.html')
+    
+    return render_template('admin/setup_admin.html') 

@@ -42,8 +42,8 @@ def init_database():
         
         print("\n🎉 Database initialization complete!")
         print("\nNext steps:")
-        print("1. Run 'python run.py create-admin' to create an admin user")
-        print("2. Start the application with 'python run.py'")
+        print("1. Run 'python3 run.py create-admin' to create an admin user")
+        print("2. Start the application with 'python3 run.py'")
 
 if __name__ == '__main__':
     init_database() 
