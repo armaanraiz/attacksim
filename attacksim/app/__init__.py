@@ -3,7 +3,7 @@ import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail
-# from flask_security import Security, SQLAlchemyUserDatastore  # Temporarily disabled
+from flask_security import Security, SQLAlchemyUserDatastore
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -11,7 +11,7 @@ from flask_limiter.util import get_remote_address
 # Initialize extensions
 db = SQLAlchemy()
 mail = Mail()
-# security = Security()  # Temporarily disabled
+security = Security()
 cors = CORS()
 limiter = Limiter(key_func=get_remote_address)
 
@@ -42,12 +42,12 @@ def create_app(config_name=None):
     
     limiter.init_app(app)
     
-    # Import models (temporarily skip User/Role for Flask-Security)
-    # from app.models import User, Role
+    # Import models for Flask-Security
+    from app.models import User, Role
     
-    # Setup Flask-Security (temporarily disabled)
-    # user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-    # security.init_app(app, user_datastore)
+    # Setup Flask-Security
+    user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+    security.init_app(app, user_datastore)
     
     # Create tables
     with app.app_context():

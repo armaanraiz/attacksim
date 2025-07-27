@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from flask_login import login_required, current_user
 from functools import wraps
 from werkzeug.utils import secure_filename
+from datetime import datetime
 from app import db
 from app.models import User, Scenario, Interaction, Group, EmailCampaign, EmailRecipient
 from app.models.scenario import ScenarioType, ScenarioStatus
@@ -791,17 +792,21 @@ def upload_campaign_image():
 def init_database():
     """Initialize database tables - accessible without login for initial setup"""
     try:
-        # Check if tables already exist by checking for admin user
-        admin_exists = User.query.filter_by(is_admin=True).first()
-        if admin_exists:
-            return jsonify({
-                'success': False, 
-                'message': 'Database already initialized. Admin user exists.',
-                'redirect': url_for('admin.setup_first_admin')
-            })
-        
-        # Create all tables
+        # Create all tables first
         db.create_all()
+        
+        # Check if admin user already exists
+        try:
+            admin_exists = User.query.filter(User.roles.any(name='admin')).first()
+            if admin_exists:
+                return jsonify({
+                    'success': False, 
+                    'message': 'Database already initialized. Admin user exists.',
+                    'redirect': url_for('admin.setup_first_admin')
+                })
+        except:
+            # Tables might not exist yet, that's fine
+            pass
         
         return jsonify({
             'success': True,
@@ -821,10 +826,14 @@ def init_database():
 def setup_first_admin():
     """Create the first admin user - accessible without login for initial setup"""
     # Check if admin already exists
-    admin_exists = User.query.filter_by(is_admin=True).first()
-    if admin_exists:
-        flash('Admin user already exists. Please login normally.', 'info')
-        return redirect(url_for('security.login'))
+    try:
+        admin_exists = User.query.filter(User.roles.any(name='admin')).first()
+        if admin_exists:
+            flash('Admin user already exists. Please login normally.', 'info')
+            return redirect(url_for('security.login'))
+    except:
+        # Tables might not exist yet, that's fine
+        pass
     
     if request.method == 'POST':
         username = request.form.get('username')
@@ -855,21 +864,34 @@ def setup_first_admin():
             return render_template('admin/setup_admin.html')
         
         try:
-            # Create admin user
+            # Create admin role if it doesn't exist
+            from flask_security import current_app
+            user_datastore = current_app.extensions['security'].datastore
+            
+            admin_role = user_datastore.find_role('admin')
+            if not admin_role:
+                admin_role = user_datastore.create_role(name='admin', description='Administrator')
+            
+            # Create admin user using Flask-Security
             import uuid
-            admin = User(
+            admin = user_datastore.create_user(
                 username=username,
                 email=email,
+                password=password,
                 first_name="Admin",
                 last_name="User",
-                is_admin=True,
-                is_active=True,
-                consent_given=True,
+                active=True,
+                confirmed_at=datetime.utcnow(),
                 fs_uniquifier=str(uuid.uuid4())
             )
-            admin.set_password(password)
             
-            db.session.add(admin)
+            # Add admin role to user
+            user_datastore.add_role_to_user(admin, admin_role)
+            
+            # Set consent
+            admin.consent_given = True
+            admin.consent_date = datetime.utcnow()
+            
             db.session.commit()
             
             flash(f'Admin user "{username}" created successfully! You can now login.', 'success')

@@ -74,6 +74,7 @@ class User(db.Model, UserMixin):
             return f"{self.first_name} {self.last_name}"
         return self.email
     
+    @property
     def is_admin(self):
         """Check if user has admin role"""
         return self.has_role('admin')
@@ -103,7 +104,7 @@ class User(db.Model, UserMixin):
             'username': self.username,
             'full_name': self.get_full_name(),
             'department': self.department,
-            'is_admin': self.is_admin(),
+            'is_admin': self.is_admin,
             'consent_given': self.consent_given,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'last_login_at': self.last_login_at.isoformat() if self.last_login_at else None
