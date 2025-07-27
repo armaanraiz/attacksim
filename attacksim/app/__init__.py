@@ -1,5 +1,6 @@
 import os
 import logging
+from datetime import datetime
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail
@@ -52,11 +53,11 @@ def create_app(config_name=None):
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
     security.init_app(app, user_datastore)
     
-    # Add CSRF token function to template context
+    # Add CSRF token and datetime to template context
     @app.context_processor
-    def inject_csrf_token():
+    def inject_template_vars():
         from flask_wtf.csrf import generate_csrf
-        return dict(csrf_token=generate_csrf)
+        return dict(csrf_token=generate_csrf, now=datetime.now())
     
     # Create tables
     with app.app_context():
