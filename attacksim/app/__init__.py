@@ -49,6 +49,12 @@ def create_app(config_name=None):
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
     security.init_app(app, user_datastore)
     
+    # Add CSRF token function to template context (using Flask-Security's CSRF)
+    @app.context_processor
+    def inject_csrf_token():
+        from flask_security.utils import get_security
+        return dict(csrf_token=lambda: get_security().csrf.generate_csrf())
+    
     # Create tables
     with app.app_context():
         db.create_all()
