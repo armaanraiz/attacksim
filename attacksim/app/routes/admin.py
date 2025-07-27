@@ -6,7 +6,7 @@ from datetime import datetime
 from app import db
 from app.models import User, Scenario, Interaction, Group, EmailCampaign, EmailRecipient, Clone
 from app.models.scenario import ScenarioType, ScenarioStatus
-from app.models.interaction import InteractionResult
+from app.models.interaction import InteractionResult, InteractionType
 from app.models.email_campaign import CampaignStatus
 from app.models.clone import CloneType, CloneStatus
 from app.utils.email_sender import PhishingEmailSender
@@ -1068,4 +1068,38 @@ def test_clone(clone_id):
 def api_active_clones():
     """API endpoint to get active clones for campaign creation"""
     clones = Clone.get_active_clones()
-    return jsonify([clone.to_dict() for clone in clones]) 
+    return jsonify([clone.to_dict() for clone in clones])
+
+@bp.route('/setup/add-clone-column')
+@login_required
+@admin_required
+def add_clone_column():
+    """Add clone_id column to email_campaigns table"""
+    try:
+        from sqlalchemy import text, inspect
+        
+        # Check if clone_id column already exists
+        inspector = inspect(db.engine)
+        columns = [col['name'] for col in inspector.get_columns('email_campaigns')]
+        
+        if 'clone_id' in columns:
+            flash('clone_id column already exists! No migration needed.', 'info')
+        else:
+            # Add the clone_id column
+            with db.engine.connect() as conn:
+                conn.execute(text('''
+                    ALTER TABLE email_campaigns 
+                    ADD COLUMN clone_id INTEGER 
+                    REFERENCES clones(id)
+                '''))
+                conn.commit()
+            
+            flash('Successfully added clone_id column to email_campaigns table!', 'success')
+        
+        return redirect(url_for('admin.clones'))
+        
+    except Exception as e:
+        flash(f'Migration failed: {str(e)}', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+ 
