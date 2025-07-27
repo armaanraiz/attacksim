@@ -53,14 +53,13 @@ def create_app(config_name=None):
     with app.app_context():
         db.create_all()
     
-    # Register blueprints - only register the API for now
-    # from app.routes import main, auth, admin, api, simulations
-    from app.routes import api
-    # app.register_blueprint(main.bp)
-    # app.register_blueprint(auth.bp)
-    # app.register_blueprint(admin.bp)
+    # Register blueprints
+    from app.routes import main, auth, admin, api, simulations
+    app.register_blueprint(main.bp)
+    app.register_blueprint(auth.bp)
+    app.register_blueprint(admin.bp, url_prefix='/admin')
     app.register_blueprint(api.bp)
-    # app.register_blueprint(simulations.bp)
+    app.register_blueprint(simulations.bp)
     
     # Add security headers for production
     @app.after_request
