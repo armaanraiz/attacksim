@@ -189,6 +189,141 @@ class Clone(db.Model):
             print(f"⚠️  Could not query clones table: {e}")
             return []
     
+    def get_discord_analytics(self):
+        """Get Discord-specific analytics for this clone"""
+        if self.clone_type != CloneType.DISCORD:
+            return None
+        
+        try:
+            from app.models.credential import PhishingCredential
+            
+            # Get all credentials submitted via this clone
+            credentials = PhishingCredential.query.filter_by(clone_id=self.id).all()
+            
+            # Analyze credential patterns
+            total_credentials = len(credentials)
+            unique_users = len(set(c.username_email for c in credentials if c.username_email))
+            
+            # Time-based analysis
+            recent_7_days = datetime.utcnow() - timedelta(days=7)
+            recent_credentials = [c for c in credentials if c.submitted_at >= recent_7_days]
+            
+            # Success rate analysis
+            conversion_rate = (total_credentials / self.total_visits * 100) if self.total_visits > 0 else 0
+            
+            # Common credential patterns (for educational analysis)
+            email_domains = []
+            for cred in credentials:
+                if cred.username_email and '@' in cred.username_email:
+                    domain = cred.username_email.split('@')[1].lower()
+                    email_domains.append(domain)
+            
+            # Count domain frequency
+            domain_counts = {}
+            for domain in email_domains:
+                domain_counts[domain] = domain_counts.get(domain, 0) + 1
+            
+            # Get top 5 domains
+            top_domains = sorted(domain_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+            
+            return {
+                'total_credentials': total_credentials,
+                'unique_users': unique_users,
+                'recent_7_days': len(recent_credentials),
+                'conversion_rate': round(conversion_rate, 2),
+                'avg_submissions_per_day': round(total_credentials / max(1, (datetime.utcnow() - self.created_at).days), 2),
+                'top_email_domains': top_domains,
+                'peak_submission_hour': self.get_peak_submission_hour(),
+                'effectiveness_score': self.calculate_effectiveness_score()
+            }
+        except Exception as e:
+            print(f"⚠️  Could not get Discord analytics: {e}")
+            return None
+    
+    def get_peak_submission_hour(self):
+        """Get the hour of day when most submissions occur"""
+        try:
+            from app.models.credential import PhishingCredential
+            
+            credentials = PhishingCredential.query.filter_by(clone_id=self.id).all()
+            hour_counts = {}
+            
+            for cred in credentials:
+                hour = cred.submitted_at.hour
+                hour_counts[hour] = hour_counts.get(hour, 0) + 1
+            
+            if not hour_counts:
+                return None
+            
+            peak_hour = max(hour_counts, key=hour_counts.get)
+            return f"{peak_hour:02d}:00"
+        except Exception:
+            return None
+    
+    def calculate_effectiveness_score(self):
+        """Calculate overall effectiveness score (0-100)"""
+        try:
+            # Factors: conversion rate (40%), usage frequency (30%), recent activity (30%)
+            conversion_score = min(100, (self.total_submissions / max(1, self.total_visits)) * 100 * 2)  # Max 50% conversion = 100 points
+            
+            usage_score = min(100, self.times_used * 10)  # 10 campaigns = 100 points
+            
+            # Recent activity score
+            if self.last_used:
+                days_since_used = (datetime.utcnow() - self.last_used).days
+                recency_score = max(0, 100 - (days_since_used * 5))  # Lose 5 points per day
+            else:
+                recency_score = 0
+            
+            # Weighted average
+            effectiveness = (conversion_score * 0.4) + (usage_score * 0.3) + (recency_score * 0.3)
+            return round(effectiveness, 1)
+        except Exception:
+            return 0.0
+    
+    def get_temporal_analytics(self, days=30):
+        """Get time-based analytics for the last N days"""
+        try:
+            from app.models.credential import PhishingCredential
+            
+            end_date = datetime.utcnow()
+            start_date = end_date - timedelta(days=days)
+            
+            credentials = PhishingCredential.query.filter(
+                PhishingCredential.clone_id == self.id,
+                PhishingCredential.submitted_at >= start_date
+            ).all()
+            
+            # Group by day
+            daily_stats = {}
+            for i in range(days):
+                date = (start_date + timedelta(days=i)).date()
+                daily_stats[date] = {
+                    'submissions': 0,
+                    'unique_users': set()
+                }
+            
+            for cred in credentials:
+                date = cred.submitted_at.date()
+                if date in daily_stats:
+                    daily_stats[date]['submissions'] += 1
+                    if cred.username_email:
+                        daily_stats[date]['unique_users'].add(cred.username_email)
+            
+            # Convert to list format for charts
+            timeline = []
+            for date in sorted(daily_stats.keys()):
+                timeline.append({
+                    'date': date.strftime('%Y-%m-%d'),
+                    'submissions': daily_stats[date]['submissions'],
+                    'unique_users': len(daily_stats[date]['unique_users'])
+                })
+            
+            return timeline
+        except Exception as e:
+            print(f"⚠️  Could not get temporal analytics: {e}")
+            return []
+    
     @staticmethod
     def get_clones_by_type(clone_type):
         """Get clones by type"""

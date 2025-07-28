@@ -135,6 +135,75 @@ class EmailCampaign(db.Model):
             return []
         return self.target_group.get_all_emails()
     
+    def get_submission_rate(self):
+        """Get credential submission rate for this campaign"""
+        recipients_count = self.recipients.count()
+        if recipients_count == 0:
+            return 0.0
+        
+        # Get submissions from credentials table
+        submitted = 0
+        if self.clone_id:
+            from app.models.credential import PhishingCredential
+            submitted = PhishingCredential.query.filter_by(campaign_id=self.id).count()
+        
+        # Also check scenario interactions as backup
+        if self.scenario_id and submitted == 0:
+            from app.models.interaction import InteractionType
+            from app.models import Interaction
+            scenario_submitted = Interaction.query.filter_by(
+                scenario_id=self.scenario_id,
+                interaction_type=InteractionType.FORM_SUBMITTED
+            ).count()
+            submitted = max(submitted, scenario_submitted)
+        
+        return round((submitted / recipients_count) * 100, 1)
+    
+    def get_avg_time_to_click(self):
+        """Get average time from email open to link click"""
+        # Get recipients who both opened and clicked
+        recipients = self.recipients.filter(
+            EmailRecipient.opened_at.isnot(None),
+            EmailRecipient.clicked_at.isnot(None)
+        ).all()
+        
+        if not recipients:
+            return 0
+        
+        total_time = 0
+        count = 0
+        
+        for recipient in recipients:
+            time_diff = recipient.clicked_at - recipient.opened_at
+            total_time += time_diff.total_seconds() / 60  # Convert to minutes
+            count += 1
+        
+        return round(total_time / count, 1) if count > 0 else 0
+    
+    def get_detection_rate(self):
+        """Get percentage of recipients who reported the email as suspicious"""
+        recipients_count = self.recipients.count()
+        if recipients_count == 0:
+            return 0.0
+        
+        reported_count = self.recipients.filter(EmailRecipient.reported_at.isnot(None)).count()
+        
+        # Also check scenario interactions for threat detection
+        detected_count = 0
+        if self.scenario_id:
+            from app.models import Interaction
+            detected_count = Interaction.query.filter_by(
+                scenario_id=self.scenario_id,
+                detected_threat=True
+            ).count()
+        
+        total_detected = max(reported_count, detected_count)
+        return round((total_detected / recipients_count) * 100, 1)
+    
+    def get_repeat_visitors(self):
+        """Get number of recipients who clicked multiple times"""
+        return self.recipients.filter(EmailRecipient.click_count > 1).count()
+    
     def to_dict(self):
         """Convert campaign to dictionary for JSON serialization"""
         return {
