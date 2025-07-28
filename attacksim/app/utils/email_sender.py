@@ -7,6 +7,8 @@ from flask import current_app, url_for
 from flask_mail import Message
 from app import mail, db
 from app.models import EmailRecipient, User
+from app.models.email_campaign import CampaignStatus
+from app.models.clone import Clone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,20 +17,21 @@ class PhishingEmailSender:
     """Utility class for sending phishing simulation emails"""
     
     def __init__(self):
-        self.tracking_domain = current_app.config.get('TRACKING_DOMAIN', 'localhost:5000')
-        self.protocol = 'https' if current_app.config.get('HTTPS_ENABLED', False) else 'http'
-    
+        """Initialize email sender with configuration"""
+        self.mail = mail
+        self.tracking_domain = current_app.config.get('TRACKING_DOMAIN', 'localhost:5001')
+        self.protocol = current_app.config.get('TRACKING_PROTOCOL', 'http')
+        
+        # Email server configuration validation
+        self.smtp_server = current_app.config.get('MAIL_SERVER')
+        self.smtp_port = current_app.config.get('MAIL_PORT')
+        self.smtp_username = current_app.config.get('MAIL_USERNAME')
+        self.smtp_password = current_app.config.get('MAIL_PASSWORD')
+        
     def _check_email_config(self):
-        """Check if email configuration is properly set up"""
-        mail_password = current_app.config.get('MAIL_PASSWORD')
-        if not mail_password:
-            raise ValueError("MAIL_PASSWORD not configured. Please set the MAIL_PASSWORD environment variable.")
-        
-        mail_username = current_app.config.get('MAIL_USERNAME')
-        if not mail_username:
-            raise ValueError("MAIL_USERNAME not configured. Please set the MAIL_USERNAME environment variable.")
-        
-        return True
+        """Validate email configuration"""
+        if not all([self.smtp_server, self.smtp_port, self.smtp_username, self.smtp_password]):
+            raise ValueError("Email configuration incomplete. Please check MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, and MAIL_PASSWORD.")
 
     def send_campaign(self, campaign):
         """Send emails for an entire campaign"""
@@ -110,8 +113,8 @@ class PhishingEmailSender:
             
             # Generate tracking URLs
             tracking_pixel_url = self._generate_tracking_pixel_url(recipient.unique_token)
-            click_tracking_url = self._generate_click_tracking_url(recipient.unique_token, campaign.scenario_id)
-            logger.info(f"Generated tracking URLs for {recipient.email}")
+            click_tracking_url = self._generate_click_tracking_url(recipient.unique_token, campaign)
+            logger.info(f"Generated tracking URLs for {recipient.email}: pixel={tracking_pixel_url}, click={click_tracking_url}")
             
             # Prepare email body with tracking and embedded images
             email_body = self._prepare_email_body(
@@ -227,15 +230,30 @@ class PhishingEmailSender:
         """Generate URL for email open tracking"""
         return f"{self.protocol}://{self.tracking_domain}/track/open/{token}"
     
-    def _generate_click_tracking_url(self, token, scenario_id):
-        """Generate URL for click tracking"""
-        return f"{self.protocol}://{self.tracking_domain}/sim/phishing/{scenario_id}?t={token}"
+    def _generate_click_tracking_url(self, token, campaign):
+        """Generate URL for click tracking using clone URL if available"""
+        # If campaign has an associated clone, use the clone URL
+        if campaign.clone_id:
+            clone = Clone.query.get(campaign.clone_id)
+            if clone and clone.status == 'active':
+                # Use the clone's full URL with tracking parameters
+                return clone.get_full_url(
+                    campaign_id=campaign.id,
+                    scenario_id=campaign.scenario_id,
+                    token=token
+                )
+        
+        # Fallback to generic tracking URL if no clone is specified
+        if campaign.scenario_id:
+            return f"{self.protocol}://{self.tracking_domain}/sim/phishing/{campaign.scenario_id}?t={token}&campaign_id={campaign.id}"
+        else:
+            # Ultimate fallback for campaigns without scenarios
+            return f"{self.protocol}://{self.tracking_domain}/track/click/{token}?campaign_id={campaign.id}"
     
     def schedule_campaign(self, campaign):
         """Schedule a campaign for later sending (would integrate with Celery)"""
         # This would integrate with Celery for scheduled sending
         # For now, we'll just mark it as scheduled
-        from app.models.email_campaign import CampaignStatus
         campaign.status = CampaignStatus.SCHEDULED
         db.session.commit()
         

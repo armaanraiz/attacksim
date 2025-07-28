@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_cors import cross_origin
 from app import db
-from app.models import Scenario, Interaction, EmailRecipient, EmailCampaign
+from app.models import Scenario, Interaction, EmailRecipient, EmailCampaign, Clone, PhishingCredential, CredentialType
 from app.models.interaction import InteractionType, InteractionResult
 import logging
 from datetime import datetime
@@ -29,6 +29,16 @@ def track_view():
         ip_address = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
         if ip_address and ',' in ip_address:
             ip_address = ip_address.split(',')[0].strip()
+        
+        # Find clone_id based on clone_type or page_url
+        clone_id = None
+        clone = None
+        if clone_type:
+            clone = Clone.query.filter_by(clone_type=clone_type, status='active').first()
+            if clone:
+                clone_id = clone.id
+                # Increment visit counter
+                clone.increment_visit()
         
         # Track email recipient if tracking token exists
         email_recipient = None
@@ -84,32 +94,62 @@ def track_submission():
         
         # Extract submitted data
         email = data.get('email')
-        password = data.get('password')  # In production, hash this immediately
+        password = data.get('password')
         tracking_token = data.get('tracking_token')
         scenario_id = data.get('scenario_id')
         campaign_id = data.get('campaign_id')
         clone_type = data.get('clone_type', 'unknown')
         user_agent = data.get('user_agent')
         page_url = data.get('page_url')
+        referrer = data.get('referrer')
         
         # Get IP address
         ip_address = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
         if ip_address and ',' in ip_address:
             ip_address = ip_address.split(',')[0].strip()
         
-        # Prepare submitted data (hash password for security)
-        submitted_data = {
-            'email': email,
-            'password_hash': hash(password) if password else None,  # Simple hash, use bcrypt in production
-            'clone_type': clone_type,
-            'timestamp': datetime.utcnow().isoformat(),
-            'page_url': page_url
-        }
+        # Find clone_id based on clone_type or page_url
+        clone_id = None
+        clone = None
+        if clone_type:
+            clone = Clone.query.filter_by(clone_type=clone_type, status='active').first()
+            if clone:
+                clone_id = clone.id
+                # Increment submission counter
+                clone.increment_submission()
         
         # Track email recipient
         email_recipient = None
         if tracking_token:
             email_recipient = EmailRecipient.query.filter_by(unique_token=tracking_token).first()
+        
+        # Store credentials in new PhishingCredential model
+        credential_data = {
+            'campaign_id': campaign_id,
+            'clone_id': clone_id,
+            'scenario_id': scenario_id,
+            'tracking_token': tracking_token,
+            'credential_type': 'email_password',
+            'email': email,
+            'password': password,
+            'clone_type': clone_type,
+            'page_url': page_url,
+            'ip_address': ip_address,
+            'user_agent': user_agent,
+            'referrer': referrer
+        }
+        
+        credential = PhishingCredential.create_credential_record(credential_data)
+        db.session.add(credential)
+        
+        # Prepare submitted data for interaction record (without raw password)
+        submitted_data = {
+            'email': email,
+            'credential_id': None,  # Will be set after commit
+            'clone_type': clone_type,
+            'timestamp': datetime.utcnow().isoformat(),
+            'page_url': page_url
+        }
         
         # Create or update interaction record
         interaction = None
@@ -149,37 +189,43 @@ def track_submission():
                     # Try to link to user if possible
                     if email_recipient and email_recipient.user_id:
                         interaction.user_id = email_recipient.user_id
+                        credential.user_id = email_recipient.user_id
                     
                     db.session.add(interaction)
                 
                 # Update scenario statistics
                 scenario.increment_stats(detected=False)
-                
-                db.session.commit()
-                
-                logger.info(f"Tracked credential submission: {clone_type} for scenario {scenario_id}")
-                
-                return jsonify({
-                    'success': True,
-                    'message': 'Credentials submitted successfully',
-                    'educational_message': scenario.educational_message or 
-                        "This was a phishing simulation! Never enter your real credentials on suspicious sites.",
-                    'interaction_id': interaction.id
-                })
         
-        # Fallback response
+        # Commit all changes
+        db.session.commit()
+        
+        # Update submitted data with credential ID
+        if interaction and credential.id:
+            submitted_data['credential_id'] = credential.id
+            interaction.submitted_data = json.dumps(submitted_data)
+            db.session.commit()
+        
+        # Get educational message from scenario or use default
+        educational_message = "This was a phishing simulation! Never enter your real credentials on suspicious sites."
+        if scenario_id:
+            scenario = Scenario.query.get(scenario_id)
+            if scenario and scenario.educational_message:
+                educational_message = scenario.educational_message
+        
+        logger.info(f"Tracked credential submission: {clone_type} - {email[:20]}... for campaign {campaign_id}")
+        
         return jsonify({
             'success': True,
-            'message': 'Data recorded',
-            'educational_message': "This was a phishing simulation! Never enter your real credentials on suspicious sites."
+            'message': 'Credentials tracked successfully',
+            'educational_message': educational_message,
+            'credential_id': credential.id
         })
         
     except Exception as e:
         logger.error(f"Failed to track submission: {str(e)}")
         return jsonify({
             'success': False,
-            'error': 'Failed to track submission',
-            'educational_message': "This was a phishing simulation! Never enter your real credentials on suspicious sites."
+            'error': 'Failed to track submission'
         }), 500
 
 @bp.route('/track-ignore', methods=['POST'])

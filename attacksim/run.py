@@ -6,10 +6,26 @@ Main application entry point
 
 import os
 from app import create_app, db
-from app.models import User, Scenario, Interaction
+from app.models import User, Scenario, Interaction, Clone, PhishingCredential, EmailCampaign
 
 # Create Flask application
 app = create_app()
+
+# Auto-create database tables on startup (for Render deployment)
+def initialize_database():
+    """Initialize database tables only"""
+    try:
+        # Create all tables (including new tracking tables)
+        db.create_all()
+        print("✅ Database tables created/updated successfully!")
+        
+    except Exception as e:
+        print(f"⚠️  Database initialization warning: {e}")
+        # Continue anyway - app might still work
+
+# Initialize database on app creation (works for all deployment methods)
+with app.app_context():
+    initialize_database()
 
 @app.shell_context_processor
 def make_shell_context():
@@ -18,7 +34,10 @@ def make_shell_context():
         'db': db,
         'User': User,
         'Scenario': Scenario,
-        'Interaction': Interaction
+        'Interaction': Interaction,
+        'Clone': Clone,
+        'PhishingCredential': PhishingCredential,
+        'EmailCampaign': EmailCampaign
     }
 
 @app.cli.command()
@@ -153,6 +172,8 @@ if __name__ == '__main__':
     
     if not os.environ.get('SECRET_KEY'):
         os.environ['SECRET_KEY'] = 'dev-secret-key-change-in-production'
+    
+
     
     # Run the application
     app.run(debug=True, host='0.0.0.0', port=5001) 
