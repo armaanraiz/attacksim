@@ -30,6 +30,7 @@ with app.app_context():
 @app.shell_context_processor
 def make_shell_context():
     """Make database models available in Flask shell"""
+    from app.models import Group
     return {
         'db': db,
         'User': User,
@@ -37,7 +38,8 @@ def make_shell_context():
         'Interaction': Interaction,
         'Clone': Clone,
         'PhishingCredential': PhishingCredential,
-        'EmailCampaign': EmailCampaign
+        'EmailCampaign': EmailCampaign,
+        'Group': Group
     }
 
 @app.cli.command()
