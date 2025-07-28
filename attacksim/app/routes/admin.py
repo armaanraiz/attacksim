@@ -927,7 +927,7 @@ def clones():
     # Group clones by type for better display
     clones_by_type = {}
     for clone in clones:
-        clone_type = clone.clone_type  # Already a string, no .value needed
+        clone_type = clone.clone_type.value if clone.clone_type else 'OTHER'  # Get enum value
         if clone_type not in clones_by_type:
             clones_by_type[clone_type] = []
         clones_by_type[clone_type].append(clone)
@@ -944,21 +944,11 @@ def create_clone():
     """Create new clone"""
     if request.method == 'POST':
         name = request.form.get('name')
-        description = request.form.get('description', '')
         clone_type = request.form.get('clone_type')
         base_url = request.form.get('base_url')
-        landing_path = request.form.get('landing_path', '/')
-        icon = request.form.get('icon', '🌐')
-        button_color = request.form.get('button_color', 'blue')
         
         if not all([name, clone_type, base_url]):
             flash('Name, clone type, and base URL are required.', 'error')
-            return redirect(url_for('admin.create_clone'))
-        
-        # Validate clone type - use string validation instead of enum
-        valid_clone_types = ['discord', 'facebook', 'google', 'microsoft', 'apple', 'twitter', 'instagram', 'linkedin', 'banking', 'corporate', 'other']
-        if clone_type not in valid_clone_types:
-            flash('Invalid clone type selected.', 'error')
             return redirect(url_for('admin.create_clone'))
         
         # Validate URL format
@@ -967,26 +957,35 @@ def create_clone():
             return redirect(url_for('admin.create_clone'))
         
         # Ensure landing path starts with /
+        landing_path = request.form.get('landing_path', '/')
         if not landing_path.startswith('/'):
             landing_path = '/' + landing_path
         
-        # Create clone - use string value directly
-        clone = Clone(
-            name=name,
-            description=description,
-            clone_type=clone_type,  # Store as string directly
-            base_url=base_url.rstrip('/'),
-            landing_path=landing_path,
-            icon=icon,
-            button_color=button_color,
-            created_by=current_user.id
-        )
-        
-        db.session.add(clone)
-        db.session.commit()
-        
-        flash(f'Clone "{name}" created successfully!', 'success')
-        return redirect(url_for('admin.clones'))
+        try:
+            # Use the Clone.create_clone_from_data method which handles enum validation
+            clone_data = {
+                'name': name,
+                'description': request.form.get('description', ''),
+                'clone_type': clone_type,
+                'base_url': base_url,
+                'landing_path': landing_path,
+                'icon': request.form.get('icon', '🌐'),
+                'button_color': request.form.get('button_color', 'blue'),
+                'uses_universal_tracking': True
+            }
+            
+            clone = Clone.create_clone_from_data(clone_data, current_user.id)
+            
+            db.session.add(clone)
+            db.session.commit()
+            
+            flash(f'Clone "{name}" created successfully!', 'success')
+            return redirect(url_for('admin.clones'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating clone: {str(e)}', 'error')
+            return redirect(url_for('admin.create_clone'))
     
     return render_template('admin/create_clone.html')
 
@@ -998,49 +997,53 @@ def edit_clone(clone_id):
     clone = Clone.query.get_or_404(clone_id)
     
     if request.method == 'POST':
-        clone.name = request.form.get('name', clone.name)
-        clone.description = request.form.get('description', clone.description)
-        
-        # Update clone type - use string value directly
-        clone_type = request.form.get('clone_type')
-        if clone_type:
-            valid_clone_types = ['discord', 'facebook', 'google', 'microsoft', 'apple', 'twitter', 'instagram', 'linkedin', 'banking', 'corporate', 'other']
-            if clone_type in valid_clone_types:
-                clone.clone_type = clone_type  # Store as string directly
-            else:
-                flash('Invalid clone type selected.', 'error')
-                return render_template('admin/edit_clone.html', clone=clone)
-        
-        # Update URLs
-        base_url = request.form.get('base_url')
-        if base_url:
-            if not base_url.startswith(('http://', 'https://')):
-                flash('Base URL must start with http:// or https://', 'error')
-                return render_template('admin/edit_clone.html', clone=clone)
-            clone.base_url = base_url.rstrip('/')
-        
-        landing_path = request.form.get('landing_path', clone.landing_path)
-        if not landing_path.startswith('/'):
-            landing_path = '/' + landing_path
-        clone.landing_path = landing_path
-        
-        # Update display configuration
-        clone.icon = request.form.get('icon', clone.icon)
-        clone.button_color = request.form.get('button_color', clone.button_color)
-        
-        # Update status - use string value directly
-        status = request.form.get('status')
-        if status:
-            valid_statuses = ['active', 'inactive', 'maintenance', 'archived']
-            if status in valid_statuses:
-                clone.status = status  # Store as string directly
-            else:
-                flash('Invalid status selected.', 'error')
-                return render_template('admin/edit_clone.html', clone=clone)
-        
-        db.session.commit()
-        flash(f'Clone "{clone.name}" updated successfully!', 'success')
-        return redirect(url_for('admin.clones'))
+        try:
+            clone.name = request.form.get('name', clone.name)
+            clone.description = request.form.get('description', clone.description)
+            
+            # Update clone type using enum validation
+            clone_type_str = request.form.get('clone_type')
+            if clone_type_str:
+                try:
+                    clone.clone_type = CloneType(clone_type_str.upper())
+                except ValueError:
+                    flash('Invalid clone type selected.', 'error')
+                    return render_template('admin/edit_clone.html', clone=clone)
+            
+            # Update URLs
+            base_url = request.form.get('base_url')
+            if base_url:
+                if not base_url.startswith(('http://', 'https://')):
+                    flash('Base URL must start with http:// or https://', 'error')
+                    return render_template('admin/edit_clone.html', clone=clone)
+                clone.base_url = base_url.rstrip('/')
+            
+            landing_path = request.form.get('landing_path', clone.landing_path)
+            if not landing_path.startswith('/'):
+                landing_path = '/' + landing_path
+            clone.landing_path = landing_path
+            
+            # Update display configuration
+            clone.icon = request.form.get('icon', clone.icon)
+            clone.button_color = request.form.get('button_color', clone.button_color)
+            
+            # Update status using enum validation
+            status_str = request.form.get('status')
+            if status_str:
+                try:
+                    clone.status = CloneStatus(status_str.upper())
+                except ValueError:
+                    flash('Invalid status selected.', 'error')
+                    return render_template('admin/edit_clone.html', clone=clone)
+            
+            db.session.commit()
+            flash(f'Clone "{clone.name}" updated successfully!', 'success')
+            return redirect(url_for('admin.clones'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating clone: {str(e)}', 'error')
+            return render_template('admin/edit_clone.html', clone=clone)
     
     return render_template('admin/edit_clone.html', clone=clone)
 
@@ -1110,33 +1113,6 @@ def add_clone_column():
     except Exception as e:
         flash(f'Migration failed: {str(e)}', 'error')
         return redirect(url_for('admin.dashboard'))
-
-@bp.route('/database/setup', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def database_setup():
-    """Database setup and fix page"""
-    if request.method == 'POST':
-        try:
-            # Import the setup function
-            import sys
-            import os
-            sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-            from setup_database import trigger_database_setup
-            
-            success = trigger_database_setup()
-            
-            if success:
-                flash('Database setup completed successfully! Discord clones should now work.', 'success')
-            else:
-                flash('Database setup failed. Check the server logs for details.', 'error')
-                
-        except Exception as e:
-            flash(f'Database setup error: {e}', 'error')
-        
-        return redirect(url_for('admin.database_setup'))
-    
-    return render_template('admin/database_setup.html')
 
 # Export tracking for universal tracking script
 @bp.route('/tracking/status')

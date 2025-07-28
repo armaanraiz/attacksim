@@ -50,17 +50,17 @@
                                     name="clone_type" 
                                     required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <option value="discord" {% if clone.clone_type == 'discord' %}selected{% endif %}>Discord</option>
-                                <option value="facebook" {% if clone.clone_type == 'facebook' %}selected{% endif %}>Facebook</option>
-                                <option value="google" {% if clone.clone_type == 'google' %}selected{% endif %}>Google</option>
-                                <option value="microsoft" {% if clone.clone_type == 'microsoft' %}selected{% endif %}>Microsoft</option>
-                                <option value="apple" {% if clone.clone_type == 'apple' %}selected{% endif %}>Apple</option>
-                                <option value="twitter" {% if clone.clone_type == 'twitter' %}selected{% endif %}>Twitter</option>
-                                <option value="instagram" {% if clone.clone_type == 'instagram' %}selected{% endif %}>Instagram</option>
-                                <option value="linkedin" {% if clone.clone_type == 'linkedin' %}selected{% endif %}>LinkedIn</option>
-                                <option value="banking" {% if clone.clone_type == 'banking' %}selected{% endif %}>Banking</option>
-                                <option value="corporate" {% if clone.clone_type == 'corporate' %}selected{% endif %}>Corporate</option>
-                                <option value="other" {% if clone.clone_type == 'other' %}selected{% endif %}>Other</option>
+                                <option value="DISCORD" {% if clone.clone_type.value == 'DISCORD' %}selected{% endif %}>Discord</option>
+                                <option value="FACEBOOK" {% if clone.clone_type.value == 'FACEBOOK' %}selected{% endif %}>Facebook</option>
+                                <option value="INSTAGRAM" {% if clone.clone_type.value == 'INSTAGRAM' %}selected{% endif %}>Instagram</option>
+                                <option value="YOUTUBE" {% if clone.clone_type.value == 'YOUTUBE' %}selected{% endif %}>YouTube</option>
+                                <option value="TWITTER" {% if clone.clone_type.value == 'TWITTER' %}selected{% endif %}>Twitter</option>
+                                <option value="TWITCH" {% if clone.clone_type.value == 'TWITCH' %}selected{% endif %}>Twitch</option>
+                                <option value="GMAIL" {% if clone.clone_type.value == 'GMAIL' %}selected{% endif %}>Gmail</option>
+                                <option value="LINKEDIN" {% if clone.clone_type.value == 'LINKEDIN' %}selected{% endif %}>LinkedIn</option>
+                                <option value="PAYPAL" {% if clone.clone_type.value == 'PAYPAL' %}selected{% endif %}>PayPal</option>
+                                <option value="BANK" {% if clone.clone_type.value == 'BANK' %}selected{% endif %}>Banking</option>
+                                <option value="OTHER" {% if clone.clone_type.value == 'OTHER' %}selected{% endif %}>Other</option>
                             </select>
                         </div>
                     </div>
@@ -180,9 +180,9 @@
                         <select id="status" 
                                 name="status" 
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <option value="active" {% if clone.status == 'active' %}selected{% endif %}>Active</option>
-                            <option value="inactive" {% if clone.status == 'inactive' %}selected{% endif %}>Inactive</option>
-                            <option value="archived" {% if clone.status == 'archived' %}selected{% endif %}>Archived</option>
+                            <option value="ACTIVE" {% if clone.status.value == 'ACTIVE' %}selected{% endif %}>Active</option>
+                            <option value="INACTIVE" {% if clone.status.value == 'INACTIVE' %}selected{% endif %}>Inactive</option>
+                            <option value="MAINTENANCE" {% if clone.status.value == 'MAINTENANCE' %}selected{% endif %}>Maintenance</option>
                         </select>
                         <p class="text-xs text-gray-500 mt-1">
                             Only active clones will appear in email campaign creation

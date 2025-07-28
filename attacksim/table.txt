@@ -1,0 +1,307 @@
+\d+ clones
+\d+ email_campaigns
+\d+ email_recipients
+\d+ group_members
+\d+ groups
+\d+ interactions
+\d+ phishing_credentials
+\d+ role
+\d+ roles_users
+\d+ scenarios
+\d+ user
+                                                                          Table "public.clones"
+         Column          |            Type             | Collation | Nullable |              Default               | Storage  | Compression | Stats target | Description 
+-------------------------+-----------------------------+-----------+----------+------------------------------------+----------+-------------+--------------+-------------
+ id                      | integer                     |           | not null | nextval('clones_id_seq'::regclass) | plain    |             |              | 
+ name                    | character varying(200)      |           | not null |                                    | extended |             |              | 
+ description             | text                        |           |          |                                    | extended |             |              | 
+ clone_type              | clonetype                   |           | not null |                                    | plain    |             |              | 
+ status                  | clonestatus                 |           | not null |                                    | plain    |             |              | 
+ base_url                | character varying(500)      |           | not null |                                    | extended |             |              | 
+ landing_path            | character varying(200)      |           | not null |                                    | extended |             |              | 
+ icon                    | character varying(10)       |           | not null |                                    | extended |             |              | 
+ button_color            | character varying(20)       |           | not null |                                    | extended |             |              | 
+ times_used              | integer                     |           | not null |                                    | plain    |             |              | 
+ last_used               | timestamp without time zone |           |          |                                    | plain    |             |              | 
+ created_by              | integer                     |           | not null |                                    | plain    |             |              | 
+ created_at              | timestamp without time zone |           | not null |                                    | plain    |             |              | 
+ updated_at              | timestamp without time zone |           | not null |                                    | plain    |             |              | 
+ uses_universal_tracking | boolean                     |           |          | true                               | plain    |             |              | 
+ custom_tracking_code    | text                        |           |          |                                    | extended |             |              | 
+ total_visits            | integer                     |           |          | 0                                  | plain    |             |              | 
+ total_submissions       | integer                     |           |          | 0                                  | plain    |             |              | 
+Indexes:
+    "clones_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "clones_created_by_fkey" FOREIGN KEY (created_by) REFERENCES "user"(id)
+Referenced by:
+    TABLE "email_campaigns" CONSTRAINT "email_campaigns_clone_id_fkey" FOREIGN KEY (clone_id) REFERENCES clones(id)
+    TABLE "phishing_credentials" CONSTRAINT "phishing_credentials_clone_id_fkey" FOREIGN KEY (clone_id) REFERENCES clones(id)
+Access method: heap
+
+                                                                       Table "public.email_campaigns"
+      Column       |            Type             | Collation | Nullable |                   Default                   | Storage  | Compression | Stats target | Description 
+-------------------+-----------------------------+-----------+----------+---------------------------------------------+----------+-------------+--------------+-------------
+ id                | integer                     |           | not null | nextval('email_campaigns_id_seq'::regclass) | plain    |             |              | 
+ name              | character varying(200)      |           | not null |                                             | extended |             |              | 
+ description       | text                        |           |          |                                             | extended |             |              | 
+ scenario_id       | integer                     |           |          |                                             | plain    |             |              | 
+ group_id          | integer                     |           | not null |                                             | plain    |             |              | 
+ status            | campaignstatus              |           | not null |                                             | plain    |             |              | 
+ subject           | character varying(300)      |           | not null |                                             | extended |             |              | 
+ body              | text                        |           | not null |                                             | extended |             |              | 
+ sender_name       | character varying(100)      |           | not null |                                             | extended |             |              | 
+ sender_email      | character varying(200)      |           | not null |                                             | extended |             |              | 
+ attached_images   | text                        |           |          |                                             | extended |             |              | 
+ tracking_domain   | character varying(200)      |           |          |                                             | extended |             |              | 
+ tracking_enabled  | boolean                     |           | not null |                                             | plain    |             |              | 
+ scheduled_for     | timestamp without time zone |           |          |                                             | plain    |             |              | 
+ sent_at           | timestamp without time zone |           |          |                                             | plain    |             |              | 
+ completed_at      | timestamp without time zone |           |          |                                             | plain    |             |              | 
+ total_recipients  | integer                     |           | not null |                                             | plain    |             |              | 
+ emails_sent       | integer                     |           | not null |                                             | plain    |             |              | 
+ emails_delivered  | integer                     |           | not null |                                             | plain    |             |              | 
+ emails_opened     | integer                     |           | not null |                                             | plain    |             |              | 
+ emails_clicked    | integer                     |           | not null |                                             | plain    |             |              | 
+ emails_reported   | integer                     |           | not null |                                             | plain    |             |              | 
+ send_failures     | integer                     |           | not null |                                             | plain    |             |              | 
+ created_by        | integer                     |           | not null |                                             | plain    |             |              | 
+ created_at        | timestamp without time zone |           | not null |                                             | plain    |             |              | 
+ updated_at        | timestamp without time zone |           | not null |                                             | plain    |             |              | 
+ recipient_details | text                        |           |          |                                             | extended |             |              | 
+ clone_id          | integer                     |           |          |                                             | plain    |             |              | 
+Indexes:
+    "email_campaigns_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "email_campaigns_clone_id_fkey" FOREIGN KEY (clone_id) REFERENCES clones(id)
+    "email_campaigns_created_by_fkey" FOREIGN KEY (created_by) REFERENCES "user"(id)
+    "email_campaigns_group_id_fkey" FOREIGN KEY (group_id) REFERENCES groups(id)
+    "email_campaigns_scenario_id_fkey" FOREIGN KEY (scenario_id) REFERENCES scenarios(id)
+Referenced by:
+    TABLE "email_recipients" CONSTRAINT "email_recipients_campaign_id_fkey" FOREIGN KEY (campaign_id) REFERENCES email_campaigns(id)
+    TABLE "phishing_credentials" CONSTRAINT "phishing_credentials_campaign_id_fkey" FOREIGN KEY (campaign_id) REFERENCES email_campaigns(id)
+Access method: heap
+
+                                                                     Table "public.email_recipients"
+     Column     |            Type             | Collation | Nullable |                   Default                    | Storage  | Compression | Stats target | Description 
+----------------+-----------------------------+-----------+----------+----------------------------------------------+----------+-------------+--------------+-------------
+ id             | integer                     |           | not null | nextval('email_recipients_id_seq'::regclass) | plain    |             |              | 
+ campaign_id    | integer                     |           | not null |                                              | plain    |             |              | 
+ email          | character varying(255)      |           | not null |                                              | extended |             |              | 
+ user_id        | integer                     |           |          |                                              | plain    |             |              | 
+ unique_token   | character varying(100)      |           | not null |                                              | extended |             |              | 
+ sent_at        | timestamp without time zone |           |          |                                              | plain    |             |              | 
+ delivered_at   | timestamp without time zone |           |          |                                              | plain    |             |              | 
+ opened_at      | timestamp without time zone |           |          |                                              | plain    |             |              | 
+ clicked_at     | timestamp without time zone |           |          |                                              | plain    |             |              | 
+ reported_at    | timestamp without time zone |           |          |                                              | plain    |             |              | 
+ open_count     | integer                     |           | not null |                                              | plain    |             |              | 
+ click_count    | integer                     |           | not null |                                              | plain    |             |              | 
+ ip_address     | character varying(45)       |           |          |                                              | extended |             |              | 
+ user_agent     | character varying(500)      |           |          |                                              | extended |             |              | 
+ send_failed    | boolean                     |           | not null |                                              | plain    |             |              | 
+ failure_reason | character varying(200)      |           |          |                                              | extended |             |              | 
+ created_at     | timestamp without time zone |           | not null |                                              | plain    |             |              | 
+ updated_at     | timestamp without time zone |           | not null |                                              | plain    |             |              | 
+Indexes:
+    "email_recipients_pkey" PRIMARY KEY, btree (id)
+    "email_recipients_unique_token_key" UNIQUE CONSTRAINT, btree (unique_token)
+Foreign-key constraints:
+    "email_recipients_campaign_id_fkey" FOREIGN KEY (campaign_id) REFERENCES email_campaigns(id)
+    "email_recipients_user_id_fkey" FOREIGN KEY (user_id) REFERENCES "user"(id)
+Access method: heap
+
+                                       Table "public.group_members"
+  Column  |  Type   | Collation | Nullable | Default | Storage | Compression | Stats target | Description 
+----------+---------+-----------+----------+---------+---------+-------------+--------------+-------------
+ group_id | integer |           | not null |         | plain   |             |              | 
+ user_id  | integer |           | not null |         | plain   |             |              | 
+Indexes:
+    "group_members_pkey" PRIMARY KEY, btree (group_id, user_id)
+Foreign-key constraints:
+    "group_members_group_id_fkey" FOREIGN KEY (group_id) REFERENCES groups(id)
+    "group_members_user_id_fkey" FOREIGN KEY (user_id) REFERENCES "user"(id)
+Access method: heap
+
+                                                                    Table "public.groups"
+   Column    |            Type             | Collation | Nullable |              Default               | Storage  | Compression | Stats target | Description 
+-------------+-----------------------------+-----------+----------+------------------------------------+----------+-------------+--------------+-------------
+ id          | integer                     |           | not null | nextval('groups_id_seq'::regclass) | plain    |             |              | 
+ name        | character varying(100)      |           | not null |                                    | extended |             |              | 
+ description | text                        |           |          |                                    | extended |             |              | 
+ created_by  | integer                     |           | not null |                                    | plain    |             |              | 
+ created_at  | timestamp without time zone |           | not null |                                    | plain    |             |              | 
+ updated_at  | timestamp without time zone |           | not null |                                    | plain    |             |              | 
+ is_active   | boolean                     |           | not null |                                    | plain    |             |              | 
+ email_list  | text                        |           |          |                                    | extended |             |              | 
+Indexes:
+    "groups_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "groups_created_by_fkey" FOREIGN KEY (created_by) REFERENCES "user"(id)
+Referenced by:
+    TABLE "email_campaigns" CONSTRAINT "email_campaigns_group_id_fkey" FOREIGN KEY (group_id) REFERENCES groups(id)
+    TABLE "group_members" CONSTRAINT "group_members_group_id_fkey" FOREIGN KEY (group_id) REFERENCES groups(id)
+Access method: heap
+
+                                                                        Table "public.interactions"
+        Column        |            Type             | Collation | Nullable |                 Default                  | Storage  | Compression | Stats target | Description 
+----------------------+-----------------------------+-----------+----------+------------------------------------------+----------+-------------+--------------+-------------
+ id                   | integer                     |           | not null | nextval('interactions_id_seq'::regclass) | plain    |             |              | 
+ user_id              | integer                     |           | not null |                                          | plain    |             |              | 
+ scenario_id          | integer                     |           | not null |                                          | plain    |             |              | 
+ interaction_type     | interactiontype             |           | not null |                                          | plain    |             |              | 
+ result               | interactionresult           |           | not null |                                          | plain    |             |              | 
+ detected_threat      | boolean                     |           | not null |                                          | plain    |             |              | 
+ ip_address           | character varying(45)       |           |          |                                          | extended |             |              | 
+ user_agent           | character varying(500)      |           |          |                                          | extended |             |              | 
+ referrer             | character varying(500)      |           |          |                                          | extended |             |              | 
+ started_at           | timestamp without time zone |           | not null |                                          | plain    |             |              | 
+ completed_at         | timestamp without time zone |           |          |                                          | plain    |             |              | 
+ response_time        | integer                     |           |          |                                          | plain    |             |              | 
+ clicked_url          | character varying(500)      |           |          |                                          | extended |             |              | 
+ submitted_data       | text                        |           |          |                                          | extended |             |              | 
+ email_delivery_id    | character varying(100)      |           |          |                                          | extended |             |              | 
+ user_feedback        | text                        |           |          |                                          | extended |             |              | 
+ confidence_level     | integer                     |           |          |                                          | plain    |             |              | 
+ reported_suspicious  | boolean                     |           | not null |                                          | plain    |             |              | 
+ viewed_education     | boolean                     |           | not null |                                          | plain    |             |              | 
+ education_time_spent | integer                     |           |          |                                          | plain    |             |              | 
+ created_at           | timestamp without time zone |           | not null |                                          | plain    |             |              | 
+ updated_at           | timestamp without time zone |           | not null |                                          | plain    |             |              | 
+Indexes:
+    "interactions_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "interactions_scenario_id_fkey" FOREIGN KEY (scenario_id) REFERENCES scenarios(id)
+    "interactions_user_id_fkey" FOREIGN KEY (user_id) REFERENCES "user"(id)
+Access method: heap
+
+                                                                      Table "public.phishing_credentials"
+     Column      |            Type             | Collation | Nullable |                     Default                      | Storage  | Compression | Stats target | Description 
+-----------------+-----------------------------+-----------+----------+--------------------------------------------------+----------+-------------+--------------+-------------
+ id              | integer                     |           | not null | nextval('phishing_credentials_id_seq'::regclass) | plain    |             |              | 
+ campaign_id     | integer                     |           |          |                                                  | plain    |             |              | 
+ clone_id        | integer                     |           |          |                                                  | plain    |             |              | 
+ scenario_id     | integer                     |           |          |                                                  | plain    |             |              | 
+ tracking_token  | character varying(100)      |           |          |                                                  | extended |             |              | 
+ user_id         | integer                     |           |          |                                                  | plain    |             |              | 
+ credential_type | character varying(50)       |           | not null |                                                  | extended |             |              | 
+ username_email  | character varying(255)      |           |          |                                                  | extended |             |              | 
+ password_hash   | character varying(255)      |           |          |                                                  | extended |             |              | 
+ additional_data | text                        |           |          |                                                  | extended |             |              | 
+ clone_type      | character varying(50)       |           |          |                                                  | extended |             |              | 
+ source_url      | character varying(500)      |           |          |                                                  | extended |             |              | 
+ ip_address      | character varying(45)       |           |          |                                                  | extended |             |              | 
+ user_agent      | character varying(500)      |           |          |                                                  | extended |             |              | 
+ referrer        | character varying(500)      |           |          |                                                  | extended |             |              | 
+ submitted_at    | timestamp without time zone |           | not null |                                                  | plain    |             |              | 
+Indexes:
+    "phishing_credentials_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "phishing_credentials_campaign_id_fkey" FOREIGN KEY (campaign_id) REFERENCES email_campaigns(id)
+    "phishing_credentials_clone_id_fkey" FOREIGN KEY (clone_id) REFERENCES clones(id)
+    "phishing_credentials_scenario_id_fkey" FOREIGN KEY (scenario_id) REFERENCES scenarios(id)
+    "phishing_credentials_user_id_fkey" FOREIGN KEY (user_id) REFERENCES "user"(id)
+Access method: heap
+
+                                                                 Table "public.role"
+   Column    |          Type          | Collation | Nullable |             Default              | Storage  | Compression | Stats target | Description 
+-------------+------------------------+-----------+----------+----------------------------------+----------+-------------+--------------+-------------
+ id          | integer                |           | not null | nextval('role_id_seq'::regclass) | plain    |             |              | 
+ name        | character varying(80)  |           |          |                                  | extended |             |              | 
+ description | character varying(255) |           |          |                                  | extended |             |              | 
+Indexes:
+    "role_pkey" PRIMARY KEY, btree (id)
+    "role_name_key" UNIQUE CONSTRAINT, btree (name)
+Referenced by:
+    TABLE "roles_users" CONSTRAINT "roles_users_role_id_fkey" FOREIGN KEY (role_id) REFERENCES role(id)
+Access method: heap
+
+                                       Table "public.roles_users"
+ Column  |  Type   | Collation | Nullable | Default | Storage | Compression | Stats target | Description 
+---------+---------+-----------+----------+---------+---------+-------------+--------------+-------------
+ user_id | integer |           |          |         | plain   |             |              | 
+ role_id | integer |           |          |         | plain   |             |              | 
+Foreign-key constraints:
+    "roles_users_role_id_fkey" FOREIGN KEY (role_id) REFERENCES role(id)
+    "roles_users_user_id_fkey" FOREIGN KEY (user_id) REFERENCES "user"(id)
+Access method: heap
+
+                                                                         Table "public.scenarios"
+        Column         |            Type             | Collation | Nullable |                Default                | Storage  | Compression | Stats target | Description 
+-----------------------+-----------------------------+-----------+----------+---------------------------------------+----------+-------------+--------------+-------------
+ id                    | integer                     |           | not null | nextval('scenarios_id_seq'::regclass) | plain    |             |              | 
+ name                  | character varying(100)      |           | not null |                                       | extended |             |              | 
+ description           | text                        |           |          |                                       | extended |             |              | 
+ scenario_type         | scenariotype                |           | not null |                                       | plain    |             |              | 
+ status                | scenariostatus              |           | not null |                                       | plain    |             |              | 
+ difficulty_level      | integer                     |           | not null |                                       | plain    |             |              | 
+ email_subject         | character varying(200)      |           |          |                                       | extended |             |              | 
+ email_body            | text                        |           |          |                                       | extended |             |              | 
+ sender_name           | character varying(100)      |           |          |                                       | extended |             |              | 
+ sender_email          | character varying(120)      |           |          |                                       | extended |             |              | 
+ target_website        | character varying(200)      |           |          |                                       | extended |             |              | 
+ fake_url              | character varying(500)      |           |          |                                       | extended |             |              | 
+ login_template        | character varying(100)      |           |          |                                       | extended |             |              | 
+ malicious_url         | character varying(500)      |           |          |                                       | extended |             |              | 
+ link_text             | character varying(200)      |           |          |                                       | extended |             |              | 
+ educational_message   | text                        |           |          |                                       | extended |             |              | 
+ learning_objectives   | text                        |           |          |                                       | extended |             |              | 
+ warning_signs         | text                        |           |          |                                       | extended |             |              | 
+ target_users          | text                        |           |          |                                       | extended |             |              | 
+ schedule_start        | timestamp without time zone |           |          |                                       | plain    |             |              | 
+ schedule_end          | timestamp without time zone |           |          |                                       | plain    |             |              | 
+ total_sent            | integer                     |           | not null |                                       | plain    |             |              | 
+ total_interactions    | integer                     |           | not null |                                       | plain    |             |              | 
+ successful_detections | integer                     |           | not null |                                       | plain    |             |              | 
+ created_by            | integer                     |           | not null |                                       | plain    |             |              | 
+ created_at            | timestamp without time zone |           | not null |                                       | plain    |             |              | 
+ updated_at            | timestamp without time zone |           | not null |                                       | plain    |             |              | 
+Indexes:
+    "scenarios_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "scenarios_created_by_fkey" FOREIGN KEY (created_by) REFERENCES "user"(id)
+Referenced by:
+    TABLE "email_campaigns" CONSTRAINT "email_campaigns_scenario_id_fkey" FOREIGN KEY (scenario_id) REFERENCES scenarios(id)
+    TABLE "interactions" CONSTRAINT "interactions_scenario_id_fkey" FOREIGN KEY (scenario_id) REFERENCES scenarios(id)
+    TABLE "phishing_credentials" CONSTRAINT "phishing_credentials_scenario_id_fkey" FOREIGN KEY (scenario_id) REFERENCES scenarios(id)
+Access method: heap
+
+                                                                      Table "public.user"
+      Column      |            Type             | Collation | Nullable |             Default              | Storage  | Compression | Stats target | Description 
+------------------+-----------------------------+-----------+----------+----------------------------------+----------+-------------+--------------+-------------
+ id               | integer                     |           | not null | nextval('user_id_seq'::regclass) | plain    |             |              | 
+ email            | character varying(255)      |           | not null |                                  | extended |             |              | 
+ username         | character varying(255)      |           |          |                                  | extended |             |              | 
+ password         | character varying(255)      |           |          |                                  | extended |             |              | 
+ active           | boolean                     |           |          |                                  | plain    |             |              | 
+ fs_uniquifier    | character varying(255)      |           | not null |                                  | extended |             |              | 
+ confirmed_at     | timestamp without time zone |           |          |                                  | plain    |             |              | 
+ google_id        | character varying(100)      |           |          |                                  | extended |             |              | 
+ first_name       | character varying(50)       |           |          |                                  | extended |             |              | 
+ last_name        | character varying(50)       |           |          |                                  | extended |             |              | 
+ department       | character varying(100)      |           |          |                                  | extended |             |              | 
+ consent_given    | boolean                     |           | not null |                                  | plain    |             |              | 
+ consent_date     | timestamp without time zone |           |          |                                  | plain    |             |              | 
+ created_at       | timestamp without time zone |           | not null |                                  | plain    |             |              | 
+ last_login_at    | timestamp without time zone |           |          |                                  | plain    |             |              | 
+ current_login_at | timestamp without time zone |           |          |                                  | plain    |             |              | 
+ last_login_ip    | character varying(100)      |           |          |                                  | extended |             |              | 
+ current_login_ip | character varying(100)      |           |          |                                  | extended |             |              | 
+ login_count      | integer                     |           |          |                                  | plain    |             |              | 
+Indexes:
+    "user_pkey" PRIMARY KEY, btree (id)
+    "user_email_key" UNIQUE CONSTRAINT, btree (email)
+    "user_fs_uniquifier_key" UNIQUE CONSTRAINT, btree (fs_uniquifier)
+    "user_google_id_key" UNIQUE CONSTRAINT, btree (google_id)
+    "user_username_key" UNIQUE CONSTRAINT, btree (username)
+Referenced by:
+    TABLE "clones" CONSTRAINT "clones_created_by_fkey" FOREIGN KEY (created_by) REFERENCES "user"(id)
+    TABLE "email_campaigns" CONSTRAINT "email_campaigns_created_by_fkey" FOREIGN KEY (created_by) REFERENCES "user"(id)
+    TABLE "email_recipients" CONSTRAINT "email_recipients_user_id_fkey" FOREIGN KEY (user_id) REFERENCES "user"(id)
+    TABLE "group_members" CONSTRAINT "group_members_user_id_fkey" FOREIGN KEY (user_id) REFERENCES "user"(id)
+    TABLE "groups" CONSTRAINT "groups_created_by_fkey" FOREIGN KEY (created_by) REFERENCES "user"(id)
+    TABLE "interactions" CONSTRAINT "interactions_user_id_fkey" FOREIGN KEY (user_id) REFERENCES "user"(id)
+    TABLE "phishing_credentials" CONSTRAINT "phishing_credentials_user_id_fkey" FOREIGN KEY (user_id) REFERENCES "user"(id)
+    TABLE "roles_users" CONSTRAINT "roles_users_user_id_fkey" FOREIGN KEY (user_id) REFERENCES "user"(id)
+    TABLE "scenarios" CONSTRAINT "scenarios_created_by_fkey" FOREIGN KEY (created_by) REFERENCES "user"(id)
+Access method: heap

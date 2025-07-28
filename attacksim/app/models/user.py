@@ -25,7 +25,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(255))
     
     # Flask-Security-Too required fields
-    active = db.Column(db.Boolean(), default=True)
+    active = db.Column(db.Boolean(), default=True, nullable=False)
     fs_uniquifier = db.Column(db.String(255), unique=True, nullable=False)
     confirmed_at = db.Column(db.DateTime())
     
@@ -47,7 +47,7 @@ class User(db.Model, UserMixin):
     current_login_at = db.Column(db.DateTime())
     last_login_ip = db.Column(db.String(100))
     current_login_ip = db.Column(db.String(100))
-    login_count = db.Column(db.Integer)
+    login_count = db.Column(db.Integer, default=0)
     
     # Relationships
     roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
