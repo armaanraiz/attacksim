@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app import create_app, db
 from app.models import Clone, User
-from app.models.clone import CloneType, CloneStatus
+# Removed CloneType, CloneStatus imports - now using string values directly
 
 def init_clones():
     """Initialize the clone management system"""
@@ -32,7 +32,7 @@ def init_clones():
         
         # Check if Discord clone already exists
         existing_discord = Clone.query.filter_by(
-            clone_type=CloneType.DISCORD,
+            clone_type="discord",
             base_url='https://discord-clone-tau-smoky.vercel.app'
         ).first()
         
@@ -47,27 +47,39 @@ def init_clones():
             return False
         
         # Create Discord clone
+        discord_clone = Clone(
+            name="Discord Security Team",
+            description="Official-looking Discord login page for phishing simulations",
+            clone_type="discord",  # Use string instead of enum
+            base_url="https://discord-clone-tau-smoky.vercel.app",
+            landing_path="/login",
+            icon="💬",
+            button_color="purple",
+            created_by=admin_user.id
+        )
+        
+        # Create another Discord clone for testing  
+        test_clone = Clone(
+            name="Discord Official Security",
+            description="High-fidelity Discord clone for advanced phishing tests",
+            clone_type="discord",  # Use string instead of enum
+            base_url="https://discord-security-official.vercel.app", 
+            landing_path="/",
+            icon="🔒",
+            button_color="indigo",
+            created_by=admin_user.id
+        )
+        
         try:
-            discord_clone = Clone(
-                name="Discord Security Team",
-                description="Discord clone deployed on Vercel for phishing simulation",
-                clone_type=CloneType.DISCORD,
-                status=CloneStatus.ACTIVE,
-                base_url="https://discord-clone-tau-smoky.vercel.app",
-                landing_path="/",
-                icon="📱",
-                button_color="blue",
-                created_by=admin_user.id
-            )
-            
             db.session.add(discord_clone)
+            db.session.add(test_clone)
             db.session.commit()
             
             print("✓ Discord clone added successfully!")
             print(f"  - Name: {discord_clone.name}")
             print(f"  - URL: {discord_clone.base_url}{discord_clone.landing_path}")
-            print(f"  - Type: {discord_clone.clone_type.value}")
-            print(f"  - Status: {discord_clone.status.value}")
+            print(f"  - Type: {discord_clone.clone_type}")  # Already a string
+            print(f"  - Status: {discord_clone.status}")  # Already a string
             
         except Exception as e:
             print(f"✗ Error adding Discord clone: {e}")
@@ -97,7 +109,7 @@ def add_sample_clones():
             {
                 'name': 'Facebook Security',
                 'description': 'Facebook clone for phishing simulation',
-                'clone_type': CloneType.FACEBOOK,
+                'clone_type': 'facebook',  # Use string instead of enum
                 'base_url': 'https://facebook-clone.vercel.app',
                 'icon': '👥',
                 'button_color': 'blue'
@@ -105,15 +117,15 @@ def add_sample_clones():
             {
                 'name': 'Gmail Security Alert',
                 'description': 'Gmail clone for phishing simulation',
-                'clone_type': CloneType.GMAIL,
+                'clone_type': 'google',  # Use string instead of enum (gmail -> google)
                 'base_url': 'https://gmail-clone.vercel.app',
                 'icon': '📧',
                 'button_color': 'red'
             },
             {
-                'name': 'PayPal Security Center',
+                'name': 'PayPal Security Check',
                 'description': 'PayPal clone for phishing simulation',
-                'clone_type': CloneType.PAYPAL,
+                'clone_type': 'banking',  # Use string instead of enum (paypal -> banking)
                 'base_url': 'https://paypal-clone.vercel.app',
                 'icon': '💳',
                 'button_color': 'yellow'
@@ -131,7 +143,7 @@ def add_sample_clones():
                     name=clone_data['name'],
                     description=clone_data['description'],
                     clone_type=clone_data['clone_type'],
-                    status=CloneStatus.INACTIVE,  # Set as inactive since these are placeholders
+                    status='inactive',  # Use string instead of enum - Set as inactive since these are placeholders
                     base_url=clone_data['base_url'],
                     landing_path="/",
                     icon=clone_data['icon'],

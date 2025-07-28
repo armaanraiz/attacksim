@@ -20,7 +20,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
 
 from app import create_app, db
 from app.models import Clone, EmailCampaign, PhishingCredential, Scenario, Group, User
-from app.models.clone import CloneType, CloneStatus
 from app.models.email_campaign import CampaignStatus
 from app.utils.email_sender import PhishingEmailSender
 import uuid
@@ -40,8 +39,8 @@ def test_tracking_integration():
             test_clone = Clone(
                 name="Test Discord Clone",
                 description="Test clone for tracking integration",
-                clone_type=CloneType.DISCORD,
-                status=CloneStatus.ACTIVE,
+                clone_type='discord',  # Use string instead of enum
+                status='active',  # Use string instead of enum
                 base_url="https://discord-clone-test.vercel.app",
                 landing_path="/login",
                 icon="💬",

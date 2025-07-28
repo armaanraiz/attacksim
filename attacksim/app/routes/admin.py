@@ -927,7 +927,7 @@ def clones():
     # Group clones by type for better display
     clones_by_type = {}
     for clone in clones:
-        clone_type = clone.clone_type.value
+        clone_type = clone.clone_type  # Already a string, no .value needed
         if clone_type not in clones_by_type:
             clones_by_type[clone_type] = []
         clones_by_type[clone_type].append(clone)

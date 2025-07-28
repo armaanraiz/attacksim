@@ -215,12 +215,14 @@ class Clone(db.Model):
         """Create a new clone from form data"""
         # Validate clone_type
         clone_type = data.get('clone_type')
-        if clone_type not in [ct.value for ct in CloneType]:
+        valid_clone_types = ['discord', 'facebook', 'google', 'microsoft', 'apple', 'twitter', 'instagram', 'linkedin', 'banking', 'corporate', 'other']
+        if clone_type not in valid_clone_types:
             clone_type = 'other'
         
         # Validate status
         status = data.get('status', 'active')
-        if status not in [cs.value for cs in CloneStatus]:
+        valid_statuses = ['active', 'inactive', 'maintenance', 'archived']
+        if status not in valid_statuses:
             status = 'active'
         
         clone = Clone(

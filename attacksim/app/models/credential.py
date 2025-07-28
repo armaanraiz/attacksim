@@ -66,7 +66,8 @@ class PhishingCredential(db.Model):
         """Create a new credential record from form submission data"""
         # Validate credential_type
         credential_type = data.get('credential_type', 'email_password')
-        if credential_type not in [ct.value for ct in CredentialType]:
+        valid_credential_types = ['email_password', 'username_password', 'social_media', 'banking', 'corporate', 'other']
+        if credential_type not in valid_credential_types:
             credential_type = 'email_password'
         
         credential = PhishingCredential(
