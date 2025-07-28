@@ -1111,4 +1111,45 @@ def add_clone_column():
         flash(f'Migration failed: {str(e)}', 'error')
         return redirect(url_for('admin.dashboard'))
 
+@bp.route('/database/setup', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def database_setup():
+    """Database setup and fix page"""
+    if request.method == 'POST':
+        try:
+            # Import the setup function
+            import sys
+            import os
+            sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+            from setup_database import trigger_database_setup
+            
+            success = trigger_database_setup()
+            
+            if success:
+                flash('Database setup completed successfully! Discord clones should now work.', 'success')
+            else:
+                flash('Database setup failed. Check the server logs for details.', 'error')
+                
+        except Exception as e:
+            flash(f'Database setup error: {e}', 'error')
+        
+        return redirect(url_for('admin.database_setup'))
+    
+    return render_template('admin/database_setup.html')
+
+# Export tracking for universal tracking script
+@bp.route('/tracking/status')
+@login_required
+def tracking_status():
+    """Get tracking status and configuration"""
+    active_clones = Clone.get_active_clones()
+    
+    return jsonify({
+        'active_clones': len(active_clones),
+        'clones': [clone.to_dict() for clone in active_clones],
+        'backend_url': request.host_url.rstrip('/'),
+        'timestamp': datetime.utcnow().isoformat()
+    })
+
  
