@@ -8,7 +8,7 @@ from flask_mail import Message
 from app import mail, db
 from app.models import EmailRecipient, User
 from app.models.email_campaign import CampaignStatus
-from app.models.clone import Clone
+from app.models.clone import Clone, CloneStatus
 import logging
 
 logger = logging.getLogger(__name__)
@@ -235,7 +235,7 @@ class PhishingEmailSender:
         # If campaign has an associated clone, use the clone URL
         if campaign.clone_id:
             clone = Clone.query.get(campaign.clone_id)
-            if clone and clone.status == 'active':
+            if clone and clone.status == CloneStatus.ACTIVE:
                 # Use the clone's full URL with tracking parameters
                 return clone.get_full_url(
                     campaign_id=campaign.id,

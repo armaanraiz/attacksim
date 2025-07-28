@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_cors import cross_origin
 from app import db
 from app.models import Scenario, Interaction, EmailRecipient, EmailCampaign, Clone, PhishingCredential, CredentialType
+from app.models.clone import CloneStatus
 from app.models.interaction import InteractionType, InteractionResult
 import logging
 from datetime import datetime
@@ -35,7 +36,7 @@ def track_view():
         clone = None
         if clone_type:
             try:
-                clone = Clone.query.filter_by(clone_type=clone_type, status='active').first()
+                clone = Clone.query.filter_by(clone_type=clone_type, status=CloneStatus.ACTIVE).first()
                 if clone:
                     clone_id = clone.id
                     # Increment visit counter
@@ -117,7 +118,7 @@ def track_submission():
         clone = None
         if clone_type:
             try:
-                clone = Clone.query.filter_by(clone_type=clone_type, status='active').first()
+                clone = Clone.query.filter_by(clone_type=clone_type, status=CloneStatus.ACTIVE).first()
                 if clone:
                     clone_id = clone.id
                     # Increment submission counter
