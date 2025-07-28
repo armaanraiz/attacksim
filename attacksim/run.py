@@ -16,6 +16,7 @@ from app.models import (
     Clone, CloneType, CloneStatus,
     PhishingCredential, CredentialType
 )
+import time
 
 # Create Flask application
 app = create_app()
@@ -23,18 +24,69 @@ app = create_app()
 # Auto-create database tables on startup (for Render deployment)
 def initialize_database():
     """Initialize database tables only"""
-    try:
-        # Create all tables (including new tracking tables)
-        db.create_all()
-        print("✅ Database tables created/updated successfully!")
-        
-    except Exception as e:
-        print(f"⚠️  Database initialization warning: {e}")
-        # Continue anyway - app might still work
+    max_retries = 3
+    retry_delay = 2
+    
+    for attempt in range(max_retries):
+        try:
+            print(f"🔄 Initializing database (attempt {attempt + 1}/{max_retries})...")
+            
+            # Create all tables (including new tracking tables)
+            db.create_all()
+            
+            # Verify tables were created by doing a simple test query
+            try:
+                db.session.execute(db.text("SELECT 1")).fetchone()
+                print("✅ Database tables created/updated successfully!")
+                return True
+                
+            except Exception as e:
+                print(f"⚠️  Database verification failed: {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
+                    
+        except Exception as e:
+            print(f"⚠️  Database initialization attempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("❌ Database initialization failed after all retries")
+                return False
+                
+    return False
+
+# Global flag to track initialization status
+_db_initialized = False
+
+def ensure_database_initialized():
+    """Ensure database is initialized before serving requests"""
+    global _db_initialized
+    if not _db_initialized:
+        with app.app_context():
+            if initialize_database():
+                _db_initialized = True
+            else:
+                raise RuntimeError("Failed to initialize database")
 
 # Initialize database on app creation (works for all deployment methods)
 with app.app_context():
-    initialize_database()
+    if initialize_database():
+        _db_initialized = True
+
+# Add before_first_request handler to ensure DB is ready
+@app.before_request
+def ensure_db_ready():
+    """Ensure database is ready before handling any request"""
+    global _db_initialized
+    if not _db_initialized:
+        try:
+            ensure_database_initialized()
+        except Exception as e:
+            print(f"❌ Database not ready: {e}")
+            # You could return an error page here if needed
+            pass
 
 @app.shell_context_processor
 def make_shell_context():

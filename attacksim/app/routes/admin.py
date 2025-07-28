@@ -625,7 +625,14 @@ def create_campaign():
     # Get scenarios, groups, and clones for the form
     scenarios = Scenario.query.filter_by(scenario_type=ScenarioType.PHISHING_EMAIL).all()
     groups = Group.query.filter_by(is_active=True).all()
-    clones = Clone.get_active_clones()
+    
+    # Get clones with error handling for race conditions
+    try:
+        clones = Clone.get_active_clones()
+    except Exception as e:
+        current_app.logger.warning(f"Could not load clones for campaign creation: {e}")
+        clones = []
+        flash('Clones section temporarily unavailable during system startup. Please refresh in a moment.', 'warning')
     
     return render_template('admin/create_campaign.html', scenarios=scenarios, groups=groups, clones=clones)
 
@@ -1067,8 +1074,12 @@ def test_clone(clone_id):
 @admin_required
 def api_active_clones():
     """API endpoint to get active clones for campaign creation"""
-    clones = Clone.get_active_clones()
-    return jsonify([clone.to_dict() for clone in clones])
+    try:
+        clones = Clone.get_active_clones()
+        return jsonify([clone.to_dict() for clone in clones])
+    except Exception as e:
+        current_app.logger.warning(f"Could not load clones for API: {e}")
+        return jsonify({'error': 'Clones temporarily unavailable during system startup'}), 503
 
 @bp.route('/setup/add-clone-column')
 @login_required

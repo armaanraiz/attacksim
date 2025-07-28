@@ -88,43 +88,78 @@ class Clone(db.Model):
     
     def increment_usage(self):
         """Increment usage counter"""
-        self.times_used += 1
-        self.last_used = datetime.utcnow()
-        db.session.commit()
+        try:
+            self.times_used += 1
+            self.last_used = datetime.utcnow()
+            db.session.commit()
+        except Exception as e:
+            print(f"⚠️  Could not increment usage: {e}")
     
     def increment_visit(self):
         """Increment visit counter"""
-        self.total_visits += 1
-        db.session.commit()
+        try:
+            self.total_visits += 1
+            db.session.commit()
+        except Exception as e:
+            print(f"⚠️  Could not increment visit: {e}")
     
     def increment_submission(self):
         """Increment submission counter"""
-        self.total_submissions += 1
-        db.session.commit()
+        try:
+            self.total_submissions += 1
+            db.session.commit()
+        except Exception as e:
+            print(f"⚠️  Could not increment submission: {e}")
     
     def get_stats(self):
         """Get clone statistics"""
-        from app.models.credential import PhishingCredential
-        
-        # Get submission rate
-        submission_rate = (self.total_submissions / self.total_visits * 100) if self.total_visits > 0 else 0
-        
-        # Get recent credentials (last 30 days)
-        recent_credentials = PhishingCredential.query.filter_by(clone_id=self.id)\
-            .filter(PhishingCredential.submitted_at >= datetime.utcnow() - timedelta(days=30))\
-            .count()
-        
-        return {
-            'total_visits': self.total_visits,
-            'total_submissions': self.total_submissions,
-            'submission_rate': round(submission_rate, 2),
-            'recent_credentials': recent_credentials,
-            'times_used_in_campaigns': self.times_used,
-            'last_used': self.last_used.isoformat() if self.last_used else None
-        }
+        try:
+            from app.models.credential import PhishingCredential
+            
+            # Get submission rate
+            submission_rate = (self.total_submissions / self.total_visits * 100) if self.total_visits > 0 else 0
+            
+            # Get recent credentials (last 30 days)
+            recent_credentials = PhishingCredential.query.filter_by(clone_id=self.id)\
+                .filter(PhishingCredential.submitted_at >= datetime.utcnow() - timedelta(days=30))\
+                .count()
+            
+            return {
+                'total_visits': self.total_visits,
+                'total_submissions': self.total_submissions,
+                'submission_rate': round(submission_rate, 2),
+                'recent_credentials': recent_credentials,
+                'times_used_in_campaigns': self.times_used,
+                'last_used': self.last_used.isoformat() if self.last_used else None
+            }
+        except Exception as e:
+            print(f"⚠️  Could not get clone stats: {e}")
+            # Return basic stats without database queries
+            submission_rate = (self.total_submissions / self.total_visits * 100) if self.total_visits > 0 else 0
+            return {
+                'total_visits': self.total_visits or 0,
+                'total_submissions': self.total_submissions or 0,
+                'submission_rate': round(submission_rate, 2),
+                'recent_credentials': 0,
+                'times_used_in_campaigns': self.times_used or 0,
+                'last_used': self.last_used.isoformat() if self.last_used else None
+            }
     
     def to_dict(self):
         """Convert to dictionary for JSON serialization"""
+        try:
+            stats = self.get_stats()
+        except Exception:
+            # Fallback stats if get_stats fails
+            stats = {
+                'total_visits': 0,
+                'total_submissions': 0,
+                'submission_rate': 0,
+                'recent_credentials': 0,
+                'times_used_in_campaigns': 0,
+                'last_used': None
+            }
+            
         return {
             'id': self.id,
             'name': self.name,
@@ -141,26 +176,39 @@ class Clone(db.Model):
             'total_submissions': self.total_submissions,
             'last_used': self.last_used.isoformat() if self.last_used else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'stats': self.get_stats()
+            'stats': stats
         }
     
     @staticmethod
     def get_active_clones():
         """Get all active clones"""
-        return Clone.query.filter_by(status='active').order_by(Clone.name).all()
+        try:
+            return Clone.query.filter_by(status='active').order_by(Clone.name).all()
+        except Exception as e:
+            # Handle case where table doesn't exist yet during initialization
+            print(f"⚠️  Could not query clones table: {e}")
+            return []
     
     @staticmethod
     def get_clones_by_type(clone_type):
         """Get clones by type"""
-        return Clone.query.filter_by(clone_type=clone_type, status='active').all()
+        try:
+            return Clone.query.filter_by(clone_type=clone_type, status='active').all()
+        except Exception as e:
+            print(f"⚠️  Could not query clones table: {e}")
+            return []
     
     @staticmethod
     def find_by_type_and_url(clone_type, base_url=None):
         """Find clone by type and optionally by URL"""
-        query = Clone.query.filter_by(clone_type=clone_type, status='active')
-        if base_url:
-            query = query.filter(Clone.base_url.contains(base_url))
-        return query.first()
+        try:
+            query = Clone.query.filter_by(clone_type=clone_type, status='active')
+            if base_url:
+                query = query.filter(Clone.base_url.contains(base_url))
+            return query.first()
+        except Exception as e:
+            print(f"⚠️  Could not query clones table: {e}")
+            return None
     
     @staticmethod
     def create_clone_from_data(data, user_id):

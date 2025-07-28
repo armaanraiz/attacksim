@@ -34,11 +34,15 @@ def track_view():
         clone_id = None
         clone = None
         if clone_type:
-            clone = Clone.query.filter_by(clone_type=clone_type, status='active').first()
-            if clone:
-                clone_id = clone.id
-                # Increment visit counter
-                clone.increment_visit()
+            try:
+                clone = Clone.query.filter_by(clone_type=clone_type, status='active').first()
+                if clone:
+                    clone_id = clone.id
+                    # Increment visit counter
+                    clone.increment_visit()
+            except Exception as e:
+                logger.warning(f"Could not query clones table: {e}")
+                # Continue without clone tracking
         
         # Track email recipient if tracking token exists
         email_recipient = None
@@ -112,11 +116,15 @@ def track_submission():
         clone_id = None
         clone = None
         if clone_type:
-            clone = Clone.query.filter_by(clone_type=clone_type, status='active').first()
-            if clone:
-                clone_id = clone.id
-                # Increment submission counter
-                clone.increment_submission()
+            try:
+                clone = Clone.query.filter_by(clone_type=clone_type, status='active').first()
+                if clone:
+                    clone_id = clone.id
+                    # Increment submission counter
+                    clone.increment_submission()
+            except Exception as e:
+                logger.warning(f"Could not query clones table: {e}")
+                # Continue without clone tracking
         
         # Track email recipient
         email_recipient = None
