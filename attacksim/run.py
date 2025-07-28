@@ -17,9 +17,98 @@ from app.models import (
     PhishingCredential, CredentialType
 )
 import time
+from sqlalchemy import text
 
 # Create Flask application
 app = create_app()
+
+def add_missing_columns():
+    """Add missing columns to existing tables using PostgreSQL-safe approach"""
+    try:
+        # PostgreSQL-safe migrations using DO blocks
+        migrations = [
+            # Clones table migrations
+            """
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                              WHERE table_name='clones' AND column_name='uses_universal_tracking') THEN
+                    ALTER TABLE clones ADD COLUMN uses_universal_tracking BOOLEAN DEFAULT TRUE;
+                END IF;
+            END $$;
+            """,
+            """
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                              WHERE table_name='clones' AND column_name='custom_tracking_code') THEN
+                    ALTER TABLE clones ADD COLUMN custom_tracking_code TEXT;
+                END IF;
+            END $$;
+            """,
+            """
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                              WHERE table_name='clones' AND column_name='total_visits') THEN
+                    ALTER TABLE clones ADD COLUMN total_visits INTEGER DEFAULT 0;
+                END IF;
+            END $$;
+            """,
+            """
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                              WHERE table_name='clones' AND column_name='total_submissions') THEN
+                    ALTER TABLE clones ADD COLUMN total_submissions INTEGER DEFAULT 0;
+                END IF;
+            END $$;
+            """,
+            # Email campaigns table migrations
+            """
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                              WHERE table_name='email_campaigns' AND column_name='clone_id') THEN
+                    ALTER TABLE email_campaigns ADD COLUMN clone_id INTEGER;
+                END IF;
+            END $$;
+            """,
+            """
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                              WHERE table_name='email_campaigns' AND column_name='description') THEN
+                    ALTER TABLE email_campaigns ADD COLUMN description TEXT;
+                END IF;
+            END $$;
+            """,
+            """
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                              WHERE table_name='email_campaigns' AND column_name='body') THEN
+                    ALTER TABLE email_campaigns ADD COLUMN body TEXT;
+                END IF;
+            END $$;
+            """
+        ]
+        
+        for sql in migrations:
+            try:
+                db.session.execute(text(sql.strip()))
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                print(f"⚠️  Migration warning: {e}")
+                
+        print("✅ Database migrations completed")
+        return True
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Migration failed: {e}")
+        return False
 
 # Auto-create database tables on startup (for Render deployment)
 def initialize_database():
@@ -31,22 +120,37 @@ def initialize_database():
         try:
             print(f"🔄 Initializing database (attempt {attempt + 1}/{max_retries})...")
             
+            # First, ensure transaction is clean
+            try:
+                db.session.rollback()
+            except:
+                pass
+            
             # Create all tables (including new tracking tables)
             db.create_all()
             
+            # Add missing columns to existing tables
+            add_missing_columns()
+            
             # Verify tables were created by doing a simple test query
             try:
-                db.session.execute(db.text("SELECT 1")).fetchone()
+                db.session.execute(text("SELECT 1")).fetchone()
+                db.session.commit()
                 print("✅ Database tables created/updated successfully!")
                 return True
                 
             except Exception as e:
+                db.session.rollback()
                 print(f"⚠️  Database verification failed: {e}")
                 if attempt < max_retries - 1:
                     time.sleep(retry_delay)
                     continue
                     
         except Exception as e:
+            try:
+                db.session.rollback()
+            except:
+                pass
             print(f"⚠️  Database initialization attempt {attempt + 1} failed: {e}")
             if attempt < max_retries - 1:
                 print(f"Retrying in {retry_delay} seconds...")
@@ -85,8 +189,11 @@ def ensure_db_ready():
             ensure_database_initialized()
         except Exception as e:
             print(f"❌ Database not ready: {e}")
-            # You could return an error page here if needed
-            pass
+            # Clean up any bad transactions
+            try:
+                db.session.rollback()
+            except:
+                pass
 
 @app.shell_context_processor
 def make_shell_context():

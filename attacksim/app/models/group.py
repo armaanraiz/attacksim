@@ -39,8 +39,16 @@ class Group(db.Model):
         emails = []
         
         # Get emails from registered members
-        for member in self.members:
-            emails.append(member.email)
+        try:
+            for member in self.members:
+                emails.append(member.email)
+        except Exception as e:
+            print(f"⚠️  Could not get member emails: {e}")
+            # Clean up transaction
+            try:
+                db.session.rollback()
+            except:
+                pass
         
         # Get external emails from email_list
         if self.email_list:
@@ -88,7 +96,17 @@ class Group(db.Model):
     
     def get_member_count(self):
         """Get total number of members (registered + external emails)"""
-        registered_count = len(self.members)
+        try:
+            registered_count = len(self.members)
+        except Exception as e:
+            print(f"⚠️  Could not get registered members: {e}")
+            # Clean up transaction
+            try:
+                db.session.rollback()
+            except:
+                pass
+            registered_count = 0
+            
         external_count = 0
         
         if self.email_list:
@@ -112,12 +130,22 @@ class Group(db.Model):
     
     def to_dict(self):
         """Convert group to dictionary for JSON serialization"""
+        try:
+            registered_members_count = len(self.members)
+        except Exception as e:
+            print(f"⚠️  Could not get registered members count: {e}")
+            try:
+                db.session.rollback()
+            except:
+                pass
+            registered_members_count = 0
+            
         return {
             'id': self.id,
             'name': self.name,
             'description': self.description,
             'member_count': self.get_member_count(),
-            'registered_members': len(self.members),
+            'registered_members': registered_members_count,
             'external_emails': len(self.get_external_emails()),
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
