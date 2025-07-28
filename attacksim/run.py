@@ -6,7 +6,16 @@ Main application entry point
 
 import os
 from app import create_app, db
-from app.models import User, Scenario, Interaction, Clone, PhishingCredential, EmailCampaign
+# Import ALL models to ensure all tables are created
+from app.models import (
+    User, Role, roles_users,
+    Scenario, ScenarioType, ScenarioStatus,
+    Interaction, InteractionType, InteractionResult,
+    EmailCampaign, EmailRecipient, CampaignStatus,
+    Group, group_members,
+    Clone, CloneType, CloneStatus,
+    PhishingCredential, CredentialType
+)
 
 # Create Flask application
 app = create_app()
@@ -30,15 +39,16 @@ with app.app_context():
 @app.shell_context_processor
 def make_shell_context():
     """Make database models available in Flask shell"""
-    from app.models import Group
     return {
         'db': db,
         'User': User,
+        'Role': Role,
         'Scenario': Scenario,
         'Interaction': Interaction,
         'Clone': Clone,
         'PhishingCredential': PhishingCredential,
         'EmailCampaign': EmailCampaign,
+        'EmailRecipient': EmailRecipient,
         'Group': Group
     }
 

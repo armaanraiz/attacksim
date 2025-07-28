@@ -19,9 +19,9 @@ class PhishingCredential(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     
     # Tracking information - FIXED: Use correct table names
-    campaign_id = db.Column(db.Integer, db.ForeignKey('email_campaign.id'), nullable=True)
+    campaign_id = db.Column(db.Integer, db.ForeignKey('email_campaigns.id'), nullable=True)  # Fixed: email_campaigns not email_campaign
     clone_id = db.Column(db.Integer, db.ForeignKey('clones.id'), nullable=True)
-    scenario_id = db.Column(db.Integer, db.ForeignKey('scenario.id'), nullable=True)
+    scenario_id = db.Column(db.Integer, db.ForeignKey('scenarios.id'), nullable=True)  # Fixed: scenarios not scenario
     tracking_token = db.Column(db.String(100), nullable=True)
     
     # User information (if known)
