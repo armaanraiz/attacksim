@@ -70,6 +70,7 @@
             </div>
 
             <form method="POST" onsubmit="return confirm('Are you sure you want to run the database setup? This will modify your database schema.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="flex items-center justify-between bg-gray-50 p-6 rounded-lg">
                     <div>
                         <h3 class="text-lg font-medium text-gray-900">Run Database Setup</h3>
