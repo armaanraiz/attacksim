@@ -955,10 +955,9 @@ def create_clone():
             flash('Name, clone type, and base URL are required.', 'error')
             return redirect(url_for('admin.create_clone'))
         
-        # Validate clone type
-        try:
-            clone_type_enum = CloneType(clone_type)
-        except ValueError:
+        # Validate clone type - use string validation instead of enum
+        valid_clone_types = ['discord', 'facebook', 'google', 'microsoft', 'apple', 'twitter', 'instagram', 'linkedin', 'banking', 'corporate', 'other']
+        if clone_type not in valid_clone_types:
             flash('Invalid clone type selected.', 'error')
             return redirect(url_for('admin.create_clone'))
         
@@ -971,11 +970,11 @@ def create_clone():
         if not landing_path.startswith('/'):
             landing_path = '/' + landing_path
         
-        # Create clone
+        # Create clone - use string value directly
         clone = Clone(
             name=name,
             description=description,
-            clone_type=clone_type_enum,
+            clone_type=clone_type,  # Store as string directly
             base_url=base_url.rstrip('/'),
             landing_path=landing_path,
             icon=icon,
@@ -989,7 +988,7 @@ def create_clone():
         flash(f'Clone "{name}" created successfully!', 'success')
         return redirect(url_for('admin.clones'))
     
-    return render_template('admin/create_clone.html', clone_types=CloneType)
+    return render_template('admin/create_clone.html')
 
 @bp.route('/clones/<int:clone_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -1002,21 +1001,22 @@ def edit_clone(clone_id):
         clone.name = request.form.get('name', clone.name)
         clone.description = request.form.get('description', clone.description)
         
-        # Update clone type
+        # Update clone type - use string value directly
         clone_type = request.form.get('clone_type')
         if clone_type:
-            try:
-                clone.clone_type = CloneType(clone_type)
-            except ValueError:
+            valid_clone_types = ['discord', 'facebook', 'google', 'microsoft', 'apple', 'twitter', 'instagram', 'linkedin', 'banking', 'corporate', 'other']
+            if clone_type in valid_clone_types:
+                clone.clone_type = clone_type  # Store as string directly
+            else:
                 flash('Invalid clone type selected.', 'error')
-                return render_template('admin/edit_clone.html', clone=clone, clone_types=CloneType)
+                return render_template('admin/edit_clone.html', clone=clone)
         
         # Update URLs
         base_url = request.form.get('base_url')
         if base_url:
             if not base_url.startswith(('http://', 'https://')):
                 flash('Base URL must start with http:// or https://', 'error')
-                return render_template('admin/edit_clone.html', clone=clone, clone_types=CloneType)
+                return render_template('admin/edit_clone.html', clone=clone)
             clone.base_url = base_url.rstrip('/')
         
         landing_path = request.form.get('landing_path', clone.landing_path)
@@ -1028,23 +1028,21 @@ def edit_clone(clone_id):
         clone.icon = request.form.get('icon', clone.icon)
         clone.button_color = request.form.get('button_color', clone.button_color)
         
-        # Update status
+        # Update status - use string value directly
         status = request.form.get('status')
         if status:
-            try:
-                clone.status = CloneStatus(status)
-            except ValueError:
+            valid_statuses = ['active', 'inactive', 'maintenance', 'archived']
+            if status in valid_statuses:
+                clone.status = status  # Store as string directly
+            else:
                 flash('Invalid status selected.', 'error')
-                return render_template('admin/edit_clone.html', clone=clone, clone_types=CloneType)
+                return render_template('admin/edit_clone.html', clone=clone)
         
         db.session.commit()
         flash(f'Clone "{clone.name}" updated successfully!', 'success')
         return redirect(url_for('admin.clones'))
     
-    return render_template('admin/edit_clone.html', 
-                         clone=clone, 
-                         clone_types=CloneType,
-                         clone_statuses=CloneStatus)
+    return render_template('admin/edit_clone.html', clone=clone)
 
 @bp.route('/clones/<int:clone_id>/delete', methods=['POST'])
 @login_required

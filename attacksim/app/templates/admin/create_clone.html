@@ -51,9 +51,17 @@
                                     required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 <option value="">Select clone type</option>
-                                {% for clone_type in clone_types %}
-                                    <option value="{{ clone_type.value }}">{{ clone_type.value.title() }}</option>
-                                {% endfor %}
+                                <option value="discord">Discord</option>
+                                <option value="facebook">Facebook</option>
+                                <option value="google">Google</option>
+                                <option value="microsoft">Microsoft</option>
+                                <option value="apple">Apple</option>
+                                <option value="twitter">Twitter</option>
+                                <option value="instagram">Instagram</option>
+                                <option value="linkedin">LinkedIn</option>
+                                <option value="banking">Banking</option>
+                                <option value="corporate">Corporate</option>
+                                <option value="other">Other</option>
                             </select>
                         </div>
                     </div>
