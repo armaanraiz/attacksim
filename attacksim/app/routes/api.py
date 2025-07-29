@@ -60,34 +60,43 @@ def track_view():
         if tracking_token:
             email_recipient = EmailRecipient.query.filter_by(unique_token=tracking_token).first()
             if email_recipient:
-                # Only update metadata, don't mark as clicked here
+                # Update metadata and mark as clicked since they're viewing the clone
                 email_recipient.ip_address = ip_address
                 email_recipient.user_agent = user_agent
+                if not email_recipient.clicked_at:  # Only mark as clicked once
+                    email_recipient.mark_clicked()
                 db.session.commit()
-                logger.info(f"Updated metadata for recipient {email_recipient.email} - Page view tracked")
+                logger.info(f"Updated metadata and marked as clicked for recipient {email_recipient.email} - Page view tracked")
+            else:
+                logger.warning(f"❌ No email recipient found for token: {tracking_token}")
         
         # Create interaction record if scenario exists
         if scenario_id:
             scenario = Scenario.query.get(scenario_id)
             if scenario:
-                interaction = Interaction(
-                    scenario_id=scenario_id,
-                    interaction_type=InteractionType.LINK_CLICKED,  # User clicked and viewed the clone page
-                    result=InteractionResult.PARTIAL,
-                    ip_address=ip_address,
-                    user_agent=user_agent,
-                    clicked_url=page_url,
-                    email_delivery_id=tracking_token
-                )
-                
-                # Try to link to user if possible
+                # Only create interaction if we have a user_id (logged in user or email recipient with user)
+                user_id = None
                 if email_recipient and email_recipient.user_id:
-                    interaction.user_id = email_recipient.user_id
+                    user_id = email_recipient.user_id
                 
-                db.session.add(interaction)
-                db.session.commit()
-                
-                logger.info(f"Tracked clone view: {clone_type} for scenario {scenario_id}")
+                if user_id:
+                    interaction = Interaction(
+                        user_id=user_id,
+                        scenario_id=scenario_id,
+                        interaction_type=InteractionType.LINK_CLICKED,  # User clicked and viewed the clone page
+                        result=InteractionResult.PARTIAL,
+                        ip_address=ip_address,
+                        user_agent=user_agent,
+                        clicked_url=page_url,
+                        email_delivery_id=tracking_token
+                    )
+                    
+                    db.session.add(interaction)
+                    db.session.commit()
+                    
+                    logger.info(f"Tracked clone view: {clone_type} for scenario {scenario_id}")
+                else:
+                    logger.info(f"Skip interaction creation - no user_id available for scenario {scenario_id}")
         
         return jsonify({
             'success': True,
@@ -101,13 +110,113 @@ def track_view():
             'error': 'Failed to track view'
         }), 500
 
+@bp.route('/track-interaction', methods=['POST'])
+@cross_origin()
+def track_interaction():
+    """Track when a user clicks links or interacts with the clone (TIER 2)"""
+    try:
+        data = request.get_json()
+        logger.info(f"🔗 TIER 2 - TRACK-INTERACTION REQUEST RECEIVED: {json.dumps(data, indent=2)}")
+        
+        # Extract tracking information
+        tracking_token = data.get('tracking_token')
+        scenario_id = data.get('scenario_id')
+        campaign_id = data.get('campaign_id')
+        clone_type = data.get('clone_type', 'unknown')
+        user_agent = data.get('user_agent')
+        page_url = data.get('page_url')
+        clicked_link = data.get('clicked_link', 'Unknown')
+        clicked_url = data.get('clicked_url', '')
+        interaction_level = data.get('interaction_level', 'interaction')
+        
+        logger.info(f"🔗 Tier 2 - Interaction params: campaign_id={campaign_id}, token={tracking_token}, clicked_link={clicked_link}")
+        
+        # Get IP address
+        ip_address = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+        if ip_address and ',' in ip_address:
+            ip_address = ip_address.split(',')[0].strip()
+        
+        # Find clone_id based on clone_type
+        clone_id = None
+        clone = None
+        if clone_type:
+            try:
+                clone_type_upper = clone_type.upper()
+                clone = Clone.query.filter_by(clone_type=clone_type_upper, status=CloneStatus.ACTIVE).first()
+                if clone:
+                    clone_id = clone.id
+                    logger.info(f"✅ Found clone for interaction: {clone.name} (ID: {clone.id}) for type: {clone_type}")
+                else:
+                    logger.warning(f"❌ No active clone found for interaction type: {clone_type} (tried: {clone_type_upper})")
+            except Exception as e:
+                logger.warning(f"Could not query clones table: {e}")
+        
+        # Track email recipient if tracking token exists
+        email_recipient = None
+        if tracking_token:
+            email_recipient = EmailRecipient.query.filter_by(unique_token=tracking_token).first()
+            if email_recipient:
+                # Update metadata but don't mark as clicked (that's for Tier 1)
+                email_recipient.ip_address = ip_address
+                email_recipient.user_agent = user_agent
+                db.session.commit()
+                logger.info(f"Updated metadata for recipient {email_recipient.email} - Interaction tracked")
+            else:
+                logger.warning(f"❌ No email recipient found for token: {tracking_token}")
+        
+        # Create interaction record if scenario exists
+        if scenario_id:
+            scenario = Scenario.query.get(scenario_id)
+            if scenario:
+                # Only create interaction if we have a user_id
+                user_id = None
+                if email_recipient and email_recipient.user_id:
+                    user_id = email_recipient.user_id
+                
+                if user_id:
+                    interaction = Interaction(
+                        user_id=user_id,
+                        scenario_id=scenario_id,
+                        interaction_type=InteractionType.LINK_CLICKED,  # User clicked a link
+                        result=InteractionResult.PARTIAL,  # They're engaging but not fully phished yet
+                        ip_address=ip_address,
+                        user_agent=user_agent,
+                        clicked_url=clicked_url,
+                        email_delivery_id=tracking_token
+                    )
+                    
+                    db.session.add(interaction)
+                    db.session.commit()
+                    
+                    logger.info(f"Tracked Tier 2 interaction: {clicked_link} for scenario {scenario_id}")
+                else:
+                    logger.info(f"Skip interaction creation - no user_id available for Tier 2 interaction")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Interaction tracked successfully',
+            'interaction_level': interaction_level,
+            'clicked_link': clicked_link
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to track interaction: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to track interaction'
+        }), 500
+
 @bp.route('/track-submission', methods=['POST'])
 @cross_origin()
 def track_submission():
-    """Track when a user submits credentials on a phishing clone"""
+    """Track when a user submits credentials on a phishing clone (TIER 3: PHISHED)"""
     try:
         data = request.get_json()
-        logger.info(f"🎣 TRACK-SUBMISSION REQUEST RECEIVED: {json.dumps({k: v if k != 'password' else '***' for k, v in data.items()}, indent=2)}")
+        logger.info(f"🎣 TIER 3 - TRACK-SUBMISSION REQUEST RECEIVED (USER PHISHED!): {json.dumps({k: v if k != 'password' else '***' for k, v in data.items()}, indent=2)}")
+        
+        # Extract interaction level
+        interaction_level = data.get('interaction_level', 'phished')
+        logger.info(f"🎣 TIER 3 - User interaction level: {interaction_level}")
         
         # Extract submitted data
         email = data.get('email')
@@ -201,25 +310,30 @@ def track_submission():
                     interaction.detected_threat = False
                     interaction.mark_completed()
                 else:
-                    # Create new interaction
-                    interaction = Interaction(
-                        scenario_id=scenario_id,
-                        interaction_type=InteractionType.FORM_SUBMITTED,
-                        result=InteractionResult.FELL_FOR_IT,
-                        detected_threat=False,
-                        ip_address=ip_address,
-                        user_agent=user_agent,
-                        clicked_url=page_url,
-                        submitted_data=json.dumps(submitted_data),
-                        email_delivery_id=tracking_token
-                    )
-                    
-                    # Try to link to user if possible
+                    # Only create interaction if we have a user_id
+                    user_id = None
                     if email_recipient and email_recipient.user_id:
-                        interaction.user_id = email_recipient.user_id
+                        user_id = email_recipient.user_id
                         credential.user_id = email_recipient.user_id
                     
-                    db.session.add(interaction)
+                    if user_id:
+                        # Create new interaction
+                        interaction = Interaction(
+                            user_id=user_id,
+                            scenario_id=scenario_id,
+                            interaction_type=InteractionType.FORM_SUBMITTED,
+                            result=InteractionResult.FELL_FOR_IT,
+                            detected_threat=False,
+                            ip_address=ip_address,
+                            user_agent=user_agent,
+                            clicked_url=page_url,
+                            submitted_data=json.dumps(submitted_data),
+                            email_delivery_id=tracking_token
+                        )
+                        
+                        db.session.add(interaction)
+                    else:
+                        logger.info(f"Skip interaction creation - no user_id available for submission")
                 
                 # Update scenario statistics
                 scenario.increment_stats(detected=False)
@@ -326,9 +440,12 @@ def get_campaign_stats(campaign_id):
             interactions = Interaction.query.filter_by(scenario_id=campaign.scenario_id).all()
             submitted_count = sum(1 for i in interactions if i.interaction_type == InteractionType.FORM_SUBMITTED)
             detected_count = sum(1 for i in interactions if i.detected_threat)
+            # Count Tier 2 interactions (link clicks)
+            interaction_count = sum(1 for i in interactions if i.interaction_type == InteractionType.LINK_CLICKED)
         else:
             submitted_count = 0
             detected_count = 0
+            interaction_count = 0
         
         stats = {
             'campaign_id': campaign_id,
@@ -337,10 +454,12 @@ def get_campaign_stats(campaign_id):
             'links_clicked': clicked_count,
             'credentials_submitted': submitted_count,
             'threats_detected': detected_count,
+            'interactions': interaction_count,  # Tier 2: Link clicks
             'open_rate': (opened_count / total_recipients * 100) if total_recipients > 0 else 0,
             'click_rate': (clicked_count / total_recipients * 100) if total_recipients > 0 else 0,
             'submission_rate': (submitted_count / total_recipients * 100) if total_recipients > 0 else 0,
-            'detection_rate': (detected_count / total_recipients * 100) if total_recipients > 0 else 0
+            'detection_rate': (detected_count / total_recipients * 100) if total_recipients > 0 else 0,
+            'interaction_rate': (interaction_count / total_recipients * 100) if total_recipients > 0 else 0
         }
         
         return jsonify({

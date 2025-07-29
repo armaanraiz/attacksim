@@ -229,6 +229,79 @@
             </div>
         </div>
 
+        <!-- 3-Tier Tracking Analytics -->
+        <div class="bg-white border-0 shadow-md rounded-lg mb-6">
+            <div class="p-6 border-b">
+                <h2 class="text-lg font-semibold">3-Tier Interaction Tracking</h2>
+                <p class="text-sm text-gray-600 mt-1">Track user engagement levels from view to phished</p>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Tier 1: View -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-blue-800">👁️ Tier 1: View</h3>
+                                <p class="text-sm text-blue-600">User opened the website</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-blue-800">{{ campaign.emails_clicked }}</div>
+                                <div class="text-xs text-blue-600">Views</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="w-full bg-blue-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: {{ (campaign.emails_clicked / campaign.total_recipients * 100) if campaign.total_recipients > 0 else 0 }}%"></div>
+                            </div>
+                            <div class="text-xs text-blue-600 mt-1">
+                                {{ "%.1f"|format((campaign.emails_clicked / campaign.total_recipients * 100) if campaign.total_recipients > 0 else 0) }}% of recipients
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tier 2: Interaction -->
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-yellow-800">🔗 Tier 2: Interaction</h3>
+                                <p class="text-sm text-yellow-600">User clicked links/buttons</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-yellow-800" id="tier2-count">-</div>
+                                <div class="text-xs text-yellow-600">Interactions</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="w-full bg-yellow-200 rounded-full h-2">
+                                <div class="bg-yellow-600 h-2 rounded-full" id="tier2-progress" style="width: 0%"></div>
+                            </div>
+                            <div class="text-xs text-yellow-600 mt-1" id="tier2-percentage">0% of recipients</div>
+                        </div>
+                    </div>
+
+                    <!-- Tier 3: Phished -->
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-red-800">🎣 Tier 3: Phished</h3>
+                                <p class="text-sm text-red-600">User submitted credentials</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-red-800" id="tier3-count">-</div>
+                                <div class="text-xs text-red-600">Phished</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="w-full bg-red-200 rounded-full h-2">
+                                <div class="bg-red-600 h-2 rounded-full" id="tier3-progress" style="width: 0%"></div>
+                            </div>
+                            <div class="text-xs text-red-600 mt-1" id="tier3-percentage">0% of recipients</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Recipients List -->
         <div class="bg-white border-0 shadow-md rounded-lg">
             <div class="p-6 border-b">
@@ -494,6 +567,43 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
+
+    // 3-Tier Tracking Analytics
+    async function updateTierAnalytics() {
+        try {
+            const response = await fetch(`/api/campaign-stats/{{ campaign.id }}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const stats = data.stats;
+                const totalRecipients = stats.total_recipients;
+                
+                // Tier 2: Interactions (link clicks)
+                const tier2Count = stats.interactions || 0;
+                const tier2Percentage = totalRecipients > 0 ? (tier2Count / totalRecipients * 100) : 0;
+                
+                document.getElementById('tier2-count').textContent = tier2Count;
+                document.getElementById('tier2-progress').style.width = tier2Percentage + '%';
+                document.getElementById('tier2-percentage').textContent = tier2Percentage.toFixed(1) + '% of recipients';
+                
+                // Tier 3: Phished (credential submissions)
+                const tier3Count = stats.credentials_submitted || 0;
+                const tier3Percentage = totalRecipients > 0 ? (tier3Count / totalRecipients * 100) : 0;
+                
+                document.getElementById('tier3-count').textContent = tier3Count;
+                document.getElementById('tier3-progress').style.width = tier3Percentage + '%';
+                document.getElementById('tier3-percentage').textContent = tier3Percentage.toFixed(1) + '% of recipients';
+                
+                console.log('✅ Tier analytics updated:', { tier2Count, tier3Count, totalRecipients });
+            }
+        } catch (error) {
+            console.error('❌ Failed to update tier analytics:', error);
+        }
+    }
+
+    // Update tier analytics on page load and every 30 seconds
+    updateTierAnalytics();
+    setInterval(updateTierAnalytics, 30000);
 });
 </script>
 {% endblock %} 
