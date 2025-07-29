@@ -17,6 +17,7 @@ def track_view():
     """Track when a user views a phishing clone page"""
     try:
         data = request.get_json()
+        logger.info(f"🎯 TRACK-VIEW REQUEST RECEIVED: {json.dumps(data, indent=2)}")
         
         # Extract tracking information
         tracking_token = data.get('tracking_token')
@@ -25,6 +26,8 @@ def track_view():
         clone_type = data.get('clone_type', 'unknown')
         user_agent = data.get('user_agent')
         page_url = data.get('page_url')
+        
+        logger.info(f"📊 Tracking params: campaign_id={campaign_id}, token={tracking_token}, clone_type={clone_type}")
         
         # Get IP address
         ip_address = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
@@ -36,24 +39,32 @@ def track_view():
         clone = None
         if clone_type:
             try:
-                clone = Clone.query.filter_by(clone_type=clone_type, status=CloneStatus.ACTIVE).first()
+                # Convert clone_type to uppercase to match the enum values stored in database
+                clone_type_upper = clone_type.upper()
+                clone = Clone.query.filter_by(clone_type=clone_type_upper, status=CloneStatus.ACTIVE).first()
                 if clone:
                     clone_id = clone.id
                     # Increment visit counter
                     clone.increment_visit()
+                    logger.info(f"✅ Found clone: {clone.name} (ID: {clone.id}) for type: {clone_type}")
+                else:
+                    logger.warning(f"❌ No active clone found for type: {clone_type} (tried: {clone_type_upper})")
             except Exception as e:
                 logger.warning(f"Could not query clones table: {e}")
                 # Continue without clone tracking
         
         # Track email recipient if tracking token exists
+        # NOTE: This is page view tracking, NOT email click tracking
+        # Email clicks are tracked in /track/click/<token> route
         email_recipient = None
         if tracking_token:
             email_recipient = EmailRecipient.query.filter_by(unique_token=tracking_token).first()
-            if email_recipient and not email_recipient.clicked_at:
-                email_recipient.mark_clicked()
+            if email_recipient:
+                # Only update metadata, don't mark as clicked here
                 email_recipient.ip_address = ip_address
                 email_recipient.user_agent = user_agent
                 db.session.commit()
+                logger.info(f"Updated metadata for recipient {email_recipient.email} - Page view tracked")
         
         # Create interaction record if scenario exists
         if scenario_id:
@@ -61,7 +72,7 @@ def track_view():
             if scenario:
                 interaction = Interaction(
                     scenario_id=scenario_id,
-                    interaction_type=InteractionType.EMAIL_CLICKED,
+                    interaction_type=InteractionType.LINK_CLICKED,  # User clicked and viewed the clone page
                     result=InteractionResult.PARTIAL,
                     ip_address=ip_address,
                     user_agent=user_agent,
@@ -96,6 +107,7 @@ def track_submission():
     """Track when a user submits credentials on a phishing clone"""
     try:
         data = request.get_json()
+        logger.info(f"🎣 TRACK-SUBMISSION REQUEST RECEIVED: {json.dumps({k: v if k != 'password' else '***' for k, v in data.items()}, indent=2)}")
         
         # Extract submitted data
         email = data.get('email')
@@ -108,6 +120,8 @@ def track_submission():
         page_url = data.get('page_url')
         referrer = data.get('referrer')
         
+        logger.info(f"🎯 Submission params: campaign_id={campaign_id}, token={tracking_token}, email={email}, clone_type={clone_type}")
+        
         # Get IP address
         ip_address = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
         if ip_address and ',' in ip_address:
@@ -118,11 +132,16 @@ def track_submission():
         clone = None
         if clone_type:
             try:
-                clone = Clone.query.filter_by(clone_type=clone_type, status=CloneStatus.ACTIVE).first()
+                # Convert clone_type to uppercase to match the enum values stored in database
+                clone_type_upper = clone_type.upper()
+                clone = Clone.query.filter_by(clone_type=clone_type_upper, status=CloneStatus.ACTIVE).first()
                 if clone:
                     clone_id = clone.id
                     # Increment submission counter
                     clone.increment_submission()
+                    logger.info(f"✅ Found clone for submission: {clone.name} (ID: {clone.id}) for type: {clone_type}")
+                else:
+                    logger.warning(f"❌ No active clone found for submission type: {clone_type} (tried: {clone_type_upper})")
             except Exception as e:
                 logger.warning(f"Could not query clones table: {e}")
                 # Continue without clone tracking

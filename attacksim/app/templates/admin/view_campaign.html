@@ -342,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Process real recipient data for timeline
     /* eslint-disable */
-    const recipients = {{ recipients | tojson }};
+    const recipients = {{ recipients_data | tojson }};
     const campaignStart = new Date('{{ campaign.created_at.strftime("%Y-%m-%d") }}');
     /* eslint-enable */
     const now = new Date();

@@ -771,7 +771,25 @@ def view_campaign(campaign_id):
     campaign = EmailCampaign.query.get_or_404(campaign_id)
     recipients = campaign.recipients.order_by(EmailRecipient.created_at.desc()).all()
     
-    return render_template('admin/view_campaign.html', campaign=campaign, recipients=recipients)
+    # Convert recipients to JSON-serializable format for charts
+    recipients_data = []
+    for recipient in recipients:
+        recipients_data.append({
+            'email': recipient.email,
+            'opened_at': recipient.opened_at.isoformat() if recipient.opened_at else None,
+            'clicked_at': recipient.clicked_at.isoformat() if recipient.clicked_at else None,
+            'reported_at': recipient.reported_at.isoformat() if recipient.reported_at else None,
+            'sent_at': recipient.sent_at.isoformat() if recipient.sent_at else None,
+            'open_count': recipient.open_count,
+            'click_count': recipient.click_count,
+            'send_failed': recipient.send_failed,
+            'delivered_at': recipient.delivered_at.isoformat() if recipient.delivered_at else None
+        })
+    
+    return render_template('admin/view_campaign.html', 
+                         campaign=campaign, 
+                         recipients=recipients,
+                         recipients_data=recipients_data)
 
 @bp.route('/campaigns/<int:campaign_id>/edit', methods=['GET', 'POST'])
 @login_required
